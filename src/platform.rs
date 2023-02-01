@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use rand::Rng;
 
 // 当前所站的平台
 #[derive(Debug, Component)]
@@ -24,7 +25,7 @@ pub fn setup_first_platform(
     ));
 }
 
-// TODO 生成下一个平台
+// 生成下一个平台
 pub fn generate_next_platform(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -34,19 +35,36 @@ pub fn generate_next_platform(
 ) {
     if q_next_platform.is_empty() {
         for current_platform in &q_current_platform {
+            let mut rng = rand::thread_rng();
+            let rand_distance = rng.gen_range(1.5..3.0);
+            let next_pos = if rng.gen_bool(0.5) {
+                Vec3::new(
+                    current_platform.translation.x + rand_distance,
+                    0.5,
+                    current_platform.translation.z,
+                )
+            } else {
+                Vec3::new(
+                    current_platform.translation.x,
+                    0.5,
+                    current_platform.translation.z - rand_distance,
+                )
+            };
+
             commands.spawn((
                 PbrBundle {
                     mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-                    material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-                    transform: Transform::from_xyz(
-                        current_platform.translation.x + 2.0,
-                        0.5,
-                        current_platform.translation.z,
-                    ),
+                    material: materials.add(rand_platform_color().into()),
+                    transform: Transform::from_translation(next_pos),
                     ..default()
                 },
                 NextPlatform,
             ));
         }
     }
+}
+
+fn rand_platform_color() -> Color {
+    let mut rng = rand::thread_rng();
+    Color::rgb(rng.gen(), rng.gen(), rng.gen())
 }

@@ -47,6 +47,8 @@ pub fn player_jump(
         let (next_platform_entity, next_platform) = q_next_platform.single();
         let mut player = q_player.single_mut();
         player.translation.x = next_platform.translation.x;
+        player.translation.z = next_platform.translation.z;
+
         commands
             .entity(next_platform_entity)
             .remove::<NextPlatform>();

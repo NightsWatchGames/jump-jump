@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{
-    player::{Player, PLAYER_INITIAL_POS},
-};
+use crate::player::{Player, PLAYER_INITIAL_POS};
 
 pub const INITIAL_CAMERA_POS: Vec3 = Vec3::new(-5.0, 8.0, 5.0);
 
