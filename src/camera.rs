@@ -1,8 +1,25 @@
 use bevy::prelude::*;
 
-use crate::{platform::CurrentPlatform, player::Player};
+use crate::{
+    player::{Player, PLAYER_INITIAL_POS},
+};
 
-const INITIAL_CAMERA_POS: Vec3 = Vec3::new(-5.0, 8.0, 5.0);
+pub const INITIAL_CAMERA_POS: Vec3 = Vec3::new(-5.0, 8.0, 5.0);
+
+#[derive(Debug, Resource)]
+pub struct CameraMoveState {
+    step: Vec3,
+    player_pos: Vec3,
+}
+
+impl Default for CameraMoveState {
+    fn default() -> Self {
+        Self {
+            step: Vec3::ZERO,
+            player_pos: PLAYER_INITIAL_POS,
+        }
+    }
+}
 
 pub fn setup_camera(mut commands: Commands) {
     // 方向光
@@ -37,12 +54,25 @@ pub fn setup_ground(
     });
 }
 
-// TODO 相机跟随玩家
+// 相机跟随玩家
 pub fn move_camera(
     q_player: Query<&Transform, With<Player>>,
     mut q_camera: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+    mut camera_move_state: ResMut<CameraMoveState>,
 ) {
     let player = q_player.single();
     let mut camera = q_camera.single_mut();
-    camera.translation = INITIAL_CAMERA_POS + player.translation;
+    let camera_destination = INITIAL_CAMERA_POS + player.translation;
+
+    // 检测player是否移动，重新计算step
+    if camera_move_state.player_pos.distance(player.translation) > 0.1 {
+        let delta = camera_destination - camera.translation;
+        camera_move_state.step = 0.05 * delta;
+        camera_move_state.player_pos = player.translation;
+    }
+
+    if camera.translation.distance(camera_destination) > Vec3::ZERO.distance(camera_move_state.step)
+    {
+        camera.translation = camera.translation + camera_move_state.step;
+    }
 }

@@ -2,6 +2,8 @@ use bevy::prelude::{shape::CapsuleUvProfile, *};
 
 use crate::platform::{CurrentPlatform, NextPlatform};
 
+pub const PLAYER_INITIAL_POS: Vec3 = Vec3::new(0.0, 1.5, 0.0);
+
 #[derive(Debug, Component)]
 pub struct Player;
 
@@ -22,7 +24,7 @@ pub fn setup_player(
                 uv_profile: CapsuleUvProfile::Aspect,
             })),
             material: materials.add(Color::PINK.into()),
-            transform: Transform::from_xyz(0.0, 1.5, 0.0),
+            transform: Transform::from_translation(PLAYER_INITIAL_POS),
             ..default()
         },
         Player,

@@ -10,6 +10,7 @@ mod player;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .insert_resource(CameraMoveState::default())
         .add_startup_system(setup_camera)
         .add_startup_system(setup_ground)
         .add_startup_system(setup_first_platform)
