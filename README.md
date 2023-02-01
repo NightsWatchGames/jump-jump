@@ -7,7 +7,7 @@
 - [x] 相机跟随
 - [x] 自动生成平台
 - [ ] 飘分效果
-- [ ] 分数统计
+- [x] 分数统计
 
 ## 参考
 - https://github.com/zhenghongzhi/Unity-JumpJump

@@ -1,6 +1,6 @@
 use bevy::prelude::{shape::CapsuleUvProfile, *};
 
-use crate::platform::{CurrentPlatform, NextPlatform};
+use crate::{platform::{CurrentPlatform, NextPlatform}, ui::Score};
 
 pub const PLAYER_INITIAL_POS: Vec3 = Vec3::new(0.0, 1.5, 0.0);
 
@@ -35,6 +35,7 @@ pub fn setup_player(
 pub fn player_jump(
     mut commands: Commands,
     buttons: Res<Input<MouseButton>>,
+    mut score: ResMut<Score>,
     mut q_player: Query<&mut Transform, With<Player>>,
     q_current_platform: Query<Entity, With<CurrentPlatform>>,
     q_next_platform: Query<(Entity, &Transform), (With<NextPlatform>, Without<Player>)>,
@@ -48,6 +49,9 @@ pub fn player_jump(
         let mut player = q_player.single_mut();
         player.translation.x = next_platform.translation.x;
         player.translation.z = next_platform.translation.z;
+
+        // 分数加1
+        score.0 += 1;
 
         commands
             .entity(next_platform_entity)
