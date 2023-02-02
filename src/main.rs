@@ -15,12 +15,7 @@ fn main() {
         .insert_resource(CameraMoveState::default())
         .insert_resource(Score(0))
         .insert_resource(Accumulator(None))
-        .insert_resource(JumpState {
-            start_pos: Vec3::ZERO,
-            end_pos: Vec3::ZERO,
-            animation_duration: 0.0,
-            completed: true,
-        })
+        .insert_resource(JumpState::default())
         .add_event::<GameOverEvent>()
         .add_startup_system(setup_camera)
         .add_startup_system(setup_ground)
@@ -32,6 +27,7 @@ fn main() {
         .add_system(player_jump)
         .add_system(update_scoreboard)
         .add_system(animate_jump)
+        .add_system(animate_player_accumulation)
         .add_system(handle_game_over_event)
         .run();
 }

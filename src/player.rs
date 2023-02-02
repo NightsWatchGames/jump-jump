@@ -24,6 +24,16 @@ pub struct JumpState {
     pub animation_duration: f32,
     pub completed: bool,
 }
+impl Default for JumpState {
+    fn default() -> Self {
+        Self {
+            start_pos: Vec3::ZERO,
+            end_pos: Vec3::ZERO,
+            animation_duration: 0.0,
+            completed: true,
+        }
+    }
+}
 
 #[derive(Debug, Component)]
 pub struct Player;
@@ -88,17 +98,17 @@ pub fn player_jump(
                 player.translation.x,
                 INITIAL_PLAYER_POS.y,
                 player.translation.z
-                    - 1.5 * accumulator.0.as_ref().unwrap().elapsed().as_secs_f32(),
+                    - 3.0 * accumulator.0.as_ref().unwrap().elapsed().as_secs_f32(),
             )
         } else {
             Vec3::new(
                 player.translation.x
-                    + 1.5 * accumulator.0.as_ref().unwrap().elapsed().as_secs_f32(),
+                    + 3.0 * accumulator.0.as_ref().unwrap().elapsed().as_secs_f32(),
                 INITIAL_PLAYER_POS.y,
                 player.translation.z,
             )
         };
-        dbg!(landing_pos);
+        dbg!(accumulator.0.as_ref().unwrap().elapsed().as_secs_f32());
 
         // 蓄力极短，跳跃后仍在当前平台上
         // 蓄力正常，跳跃到下一平台
@@ -182,5 +192,21 @@ pub fn animate_jump(
     }
 }
 
-// TODO 角色蓄力效果
-pub fn animate_player_accumulation() {}
+// 角色蓄力效果
+pub fn animate_player_accumulation(
+    accumulator: Res<Accumulator>,
+    mut q_player: Query<&mut Transform, With<Player>>,
+    time: Res<Time>,
+) {
+    let mut player = q_player.single_mut();
+    match accumulator.0 {
+        Some(_) => {
+            player.scale.x = (player.scale.x + 0.0006 * time.elapsed_seconds()).min(1.3);
+            player.scale.y = (player.scale.y - 0.0008 * time.elapsed_seconds()).max(0.6);
+            player.scale.z = (player.scale.z + 0.0006 * time.elapsed_seconds()).min(1.3);
+        }
+        None => {
+            player.scale = Vec3::ONE;
+        }
+    }
+}
