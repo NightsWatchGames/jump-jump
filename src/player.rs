@@ -2,7 +2,7 @@ use bevy::prelude::{shape::CapsuleUvProfile, *};
 use std::f32::consts::{PI, TAU};
 use std::time::Instant;
 
-use crate::platform::is_landed_on_platform;
+use crate::platform::PlatformShape;
 use crate::ui::GameOverEvent;
 use crate::{
     platform::{CurrentPlatform, NextPlatform},
@@ -10,9 +10,6 @@ use crate::{
 };
 
 pub const INITIAL_PLAYER_POS: Vec3 = Vec3::new(0.0, 1.5, 0.0);
-// 跳跃动画时长，秒
-// TODO 随跳跃距离而变化
-pub const JUMP_ANIMATION_DURATION: f32 = 1.0;
 
 // 蓄力
 #[derive(Debug, Resource)]
@@ -23,6 +20,8 @@ pub struct Accumulator(pub Option<Instant>);
 pub struct JumpState {
     pub start_pos: Vec3,
     pub end_pos: Vec3,
+    // 跳跃动画时长，秒
+    pub animation_duration: f32,
     pub completed: bool,
 }
 
@@ -62,8 +61,11 @@ pub fn player_jump(
     time: Res<Time>,
     mut game_over_ew: EventWriter<GameOverEvent>,
     q_player: Query<&Transform, With<Player>>,
-    q_current_platform: Query<(Entity, &Transform), With<CurrentPlatform>>,
-    q_next_platform: Query<(Entity, &Transform), (With<NextPlatform>, Without<Player>)>,
+    q_current_platform: Query<(Entity, &Transform, &PlatformShape), With<CurrentPlatform>>,
+    q_next_platform: Query<
+        (Entity, &Transform, &PlatformShape),
+        (With<NextPlatform>, Without<Player>),
+    >,
 ) {
     // 如果上一跳未完成则忽略
     if buttons.just_pressed(MouseButton::Left) && jump_state.completed {
@@ -75,8 +77,9 @@ pub fn player_jump(
             warn!("There is no next platform");
             return;
         }
-        let (current_platform_entity, current_platform) = q_current_platform.single();
-        let (next_platform_entity, next_platform) = q_next_platform.single();
+        let (current_platform_entity, current_platform, current_platform_shape) =
+            q_current_platform.single();
+        let (next_platform_entity, next_platform, next_platform_shape) = q_next_platform.single();
         let player = q_player.single();
 
         // 计算跳跃后的落点位置
@@ -99,14 +102,17 @@ pub fn player_jump(
 
         // 蓄力极短，跳跃后仍在当前平台上
         // 蓄力正常，跳跃到下一平台
-        if is_landed_on_platform(current_platform.translation, landing_pos)
-            || is_landed_on_platform(next_platform.translation, landing_pos)
+        if current_platform_shape.is_landed_on_platform(current_platform.translation, landing_pos)
+            || next_platform_shape.is_landed_on_platform(next_platform.translation, landing_pos)
         {
             jump_state.start_pos = player.translation;
             jump_state.end_pos = landing_pos;
+            // 跳跃动画时长随距离而变化
+            jump_state.animation_duration =
+                (accumulator.0.as_ref().unwrap().elapsed().as_secs_f32() / 2.0).max(0.5);
             jump_state.completed = false;
 
-            if is_landed_on_platform(next_platform.translation, landing_pos) {
+            if next_platform_shape.is_landed_on_platform(next_platform.translation, landing_pos) {
                 // 分数加1
                 score.0 += 1;
                 commands
@@ -139,7 +145,7 @@ pub fn animate_jump(
     if !jump_state.completed {
         let mut player = q_player.single_mut();
 
-        // 围绕中心点圆周运动
+        // TODO 围绕中心点圆周?运动
         let around_point = Vec3::new(
             (jump_state.start_pos.x + jump_state.end_pos.x) / 2.0,
             (jump_state.start_pos.y + jump_state.end_pos.y) / 2.0,
@@ -153,7 +159,7 @@ pub fn animate_jump(
         };
         let quat = Quat::from_axis_angle(
             rotate_axis,
-            -(1.0 / JUMP_ANIMATION_DURATION) * PI * time.delta_seconds(),
+            -(1.0 / jump_state.animation_duration) * PI * time.delta_seconds(),
         );
 
         let mut clone_player = player.clone();
@@ -170,7 +176,7 @@ pub fn animate_jump(
             // 自身旋转
             player.rotate_local_axis(
                 rotate_axis,
-                -(1.0 / JUMP_ANIMATION_DURATION) * TAU * time.delta_seconds(),
+                -(1.0 / jump_state.animation_duration) * TAU * time.delta_seconds(),
             );
         }
     }

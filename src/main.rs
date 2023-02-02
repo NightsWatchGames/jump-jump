@@ -18,6 +18,7 @@ fn main() {
         .insert_resource(JumpState {
             start_pos: Vec3::ZERO,
             end_pos: Vec3::ZERO,
+            animation_duration: 0.0,
             completed: true,
         })
         .add_event::<GameOverEvent>()
