@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::player::{Player, PLAYER_INITIAL_POS};
+use crate::player::{JumpState, Player, PLAYER_INITIAL_POS};
 
 pub const INITIAL_CAMERA_POS: Vec3 = Vec3::new(-5.0, 8.0, 5.0);
 
@@ -57,20 +57,25 @@ pub fn move_camera(
     q_player: Query<&Transform, With<Player>>,
     mut q_camera: Query<&mut Transform, (With<Camera>, Without<Player>)>,
     mut camera_move_state: ResMut<CameraMoveState>,
+    jump_state: Res<JumpState>,
 ) {
-    let player = q_player.single();
-    let mut camera = q_camera.single_mut();
-    let camera_destination = INITIAL_CAMERA_POS + player.translation;
+    // 跳跃期间不移动相机
+    if jump_state.completed {
+        let player = q_player.single();
+        let mut camera = q_camera.single_mut();
+        let camera_destination = INITIAL_CAMERA_POS + player.translation;
 
-    // 检测player是否移动，重新计算step
-    if camera_move_state.player_pos.distance(player.translation) > 0.1 {
-        let delta = camera_destination - camera.translation;
-        camera_move_state.step = 0.05 * delta;
-        camera_move_state.player_pos = player.translation;
-    }
+        // 检测player是否移动，重新计算step
+        if camera_move_state.player_pos.distance(player.translation) > 0.1 {
+            let delta = camera_destination - camera.translation;
+            camera_move_state.step = 0.05 * delta;
+            camera_move_state.player_pos = player.translation;
+        }
 
-    if camera.translation.distance(camera_destination) > Vec3::ZERO.distance(camera_move_state.step)
-    {
-        camera.translation = camera.translation + camera_move_state.step;
+        if camera.translation.distance(camera_destination)
+            > Vec3::ZERO.distance(camera_move_state.step)
+        {
+            camera.translation = camera.translation + camera_move_state.step;
+        }
     }
 }

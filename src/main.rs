@@ -14,6 +14,12 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .insert_resource(CameraMoveState::default())
         .insert_resource(Score(0))
+        .insert_resource(Accumulator(None))
+        .insert_resource(JumpState {
+            start_pos: Vec3::ZERO,
+            end_pos: Vec3::ZERO,
+            completed: true,
+        })
         .add_startup_system(setup_camera)
         .add_startup_system(setup_ground)
         .add_startup_system(setup_first_platform)
@@ -23,5 +29,6 @@ fn main() {
         .add_system(move_camera)
         .add_system(player_jump)
         .add_system(update_scoreboard)
+        .add_system(animate_jump)
         .run();
 }
