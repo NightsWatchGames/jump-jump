@@ -108,6 +108,7 @@ pub fn player_jump(
                 player.translation.z,
             )
         };
+        dbg!(player.translation);
         dbg!(accumulator.0.as_ref().unwrap().elapsed().as_secs_f32());
 
         // 蓄力极短，跳跃后仍在当前平台上
@@ -193,6 +194,7 @@ pub fn animate_jump(
 }
 
 // 角色蓄力效果
+// TODO 蓄力过程中保持与平台相接触
 pub fn animate_player_accumulation(
     accumulator: Res<Accumulator>,
     mut q_player: Query<&mut Transform, With<Player>>,

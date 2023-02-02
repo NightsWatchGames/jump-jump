@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use rand::Rng;
 
+use crate::player::Accumulator;
+
 // 当前所站的平台
 #[derive(Debug, Component)]
 pub struct CurrentPlatform;
@@ -100,8 +102,24 @@ pub fn generate_next_platform(
     }
 }
 
-// TODO 平台蓄力效果
-pub fn animate_platform_accumulation() {}
+// 平台蓄力效果
+pub fn animate_platform_accumulation(
+    accumulator: Res<Accumulator>,
+    mut q_current_platform: Query<&mut Transform, With<CurrentPlatform>>,
+    time: Res<Time>,
+) {
+    let mut current_platform = q_current_platform.single_mut();
+    match accumulator.0 {
+        Some(_) => {
+            current_platform.scale.y =
+                (current_platform.scale.y - 0.0008 * time.elapsed_seconds()).max(0.6);
+        }
+        None => {
+            // TODO 回弹效果
+            current_platform.scale = Vec3::ONE;
+        }
+    }
+}
 
 fn rand_platform_color() -> Color {
     let mut rng = rand::thread_rng();

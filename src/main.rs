@@ -28,6 +28,7 @@ fn main() {
         .add_system(update_scoreboard)
         .add_system(animate_jump)
         .add_system(animate_player_accumulation)
+        .add_system(animate_platform_accumulation)
         .add_system(handle_game_over_event)
         .run();
 }
