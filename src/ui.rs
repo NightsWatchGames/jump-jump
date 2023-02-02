@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{app::AppExit, prelude::*};
+
+#[derive(Debug, Default)]
+pub struct GameOverEvent;
 
 #[derive(Debug, Resource)]
 pub struct Score(pub u32);
@@ -44,5 +47,14 @@ pub fn update_scoreboard(score: Res<Score>, mut query: Query<&mut Text, With<Sco
     if score.is_changed() {
         let mut text = query.single_mut();
         text.sections[1].value = score.0.to_string();
+    }
+}
+
+pub fn handle_game_over_event(
+    game_over_er: EventReader<GameOverEvent>,
+    mut app_exit_ew: EventWriter<AppExit>,
+) {
+    if !game_over_er.is_empty() {
+        app_exit_ew.send_default();
     }
 }

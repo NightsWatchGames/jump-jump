@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::player::{JumpState, Player, PLAYER_INITIAL_POS};
+use crate::player::{JumpState, Player, INITIAL_PLAYER_POS};
 
 pub const INITIAL_CAMERA_POS: Vec3 = Vec3::new(-5.0, 8.0, 5.0);
 
@@ -14,7 +14,7 @@ impl Default for CameraMoveState {
     fn default() -> Self {
         Self {
             step: Vec3::ZERO,
-            player_pos: PLAYER_INITIAL_POS,
+            player_pos: INITIAL_PLAYER_POS,
         }
     }
 }

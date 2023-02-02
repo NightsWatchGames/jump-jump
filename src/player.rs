@@ -2,13 +2,16 @@ use bevy::prelude::{shape::CapsuleUvProfile, *};
 use std::f32::consts::{PI, TAU};
 use std::time::Instant;
 
+use crate::platform::is_landed_on_platform;
+use crate::ui::GameOverEvent;
 use crate::{
     platform::{CurrentPlatform, NextPlatform},
     ui::Score,
 };
 
-pub const PLAYER_INITIAL_POS: Vec3 = Vec3::new(0.0, 1.5, 0.0);
+pub const INITIAL_PLAYER_POS: Vec3 = Vec3::new(0.0, 1.5, 0.0);
 // 跳跃动画时长，秒
+// TODO 随跳跃距离而变化
 pub const JUMP_ANIMATION_DURATION: f32 = 1.0;
 
 // 蓄力
@@ -43,14 +46,13 @@ pub fn setup_player(
                 uv_profile: CapsuleUvProfile::Aspect,
             })),
             material: materials.add(Color::PINK.into()),
-            transform: Transform::from_translation(PLAYER_INITIAL_POS),
+            transform: Transform::from_translation(INITIAL_PLAYER_POS),
             ..default()
         },
         Player,
     ));
 }
 
-// TODO
 pub fn player_jump(
     mut commands: Commands,
     buttons: Res<Input<MouseButton>>,
@@ -58,8 +60,9 @@ pub fn player_jump(
     mut accumulator: ResMut<Accumulator>,
     mut jump_state: ResMut<JumpState>,
     time: Res<Time>,
+    mut game_over_ew: EventWriter<GameOverEvent>,
     q_player: Query<&Transform, With<Player>>,
-    q_current_platform: Query<Entity, With<CurrentPlatform>>,
+    q_current_platform: Query<(Entity, &Transform), With<CurrentPlatform>>,
     q_next_platform: Query<(Entity, &Transform), (With<NextPlatform>, Without<Player>)>,
 ) {
     // 如果上一跳未完成则忽略
@@ -72,32 +75,56 @@ pub fn player_jump(
             warn!("There is no next platform");
             return;
         }
-        // TODO 计算跳跃后的落点位置
-        // TODO 蓄力极短，跳跃后仍在当前平台上
-        // TODO 蓄力不足或蓄力过度，游戏结束
+        let (current_platform_entity, current_platform) = q_current_platform.single();
         let (next_platform_entity, next_platform) = q_next_platform.single();
         let player = q_player.single();
 
-        jump_state.start_pos = player.translation;
-        jump_state.end_pos = Vec3::new(
-            next_platform.translation.x,
-            PLAYER_INITIAL_POS.y,
-            next_platform.translation.z,
-        );
-        jump_state.completed = false;
+        // 计算跳跃后的落点位置
+        let landing_pos = if (next_platform.translation.x - current_platform.translation.x) < 0.1 {
+            Vec3::new(
+                player.translation.x,
+                INITIAL_PLAYER_POS.y,
+                player.translation.z
+                    - 1.5 * accumulator.0.as_ref().unwrap().elapsed().as_secs_f32(),
+            )
+        } else {
+            Vec3::new(
+                player.translation.x
+                    + 1.5 * accumulator.0.as_ref().unwrap().elapsed().as_secs_f32(),
+                INITIAL_PLAYER_POS.y,
+                player.translation.z,
+            )
+        };
+        dbg!(landing_pos);
 
-        // 分数加1
-        score.0 += 1;
+        // 蓄力极短，跳跃后仍在当前平台上
+        // 蓄力正常，跳跃到下一平台
+        if is_landed_on_platform(current_platform.translation, landing_pos)
+            || is_landed_on_platform(next_platform.translation, landing_pos)
+        {
+            jump_state.start_pos = player.translation;
+            jump_state.end_pos = landing_pos;
+            jump_state.completed = false;
 
-        commands
-            .entity(next_platform_entity)
-            .remove::<NextPlatform>();
-        commands
-            .entity(next_platform_entity)
-            .insert(CurrentPlatform);
-        commands
-            .entity(q_current_platform.single())
-            .remove::<CurrentPlatform>();
+            if is_landed_on_platform(next_platform.translation, landing_pos) {
+                // 分数加1
+                score.0 += 1;
+                commands
+                    .entity(next_platform_entity)
+                    .remove::<NextPlatform>();
+                commands
+                    .entity(next_platform_entity)
+                    .insert(CurrentPlatform);
+                commands
+                    .entity(current_platform_entity)
+                    .remove::<CurrentPlatform>();
+            }
+
+        // 蓄力不足或蓄力过度，游戏结束
+        } else {
+            info!("Game over!");
+            game_over_ew.send_default();
+        }
 
         // 结束蓄力
         accumulator.0 = None;
@@ -131,7 +158,7 @@ pub fn animate_jump(
 
         let mut clone_player = player.clone();
         clone_player.translate_around(around_point, quat);
-        if clone_player.translation.y < PLAYER_INITIAL_POS.y {
+        if clone_player.translation.y < INITIAL_PLAYER_POS.y {
             player.translation = jump_state.end_pos;
             player.rotation = Quat::IDENTITY;
 
@@ -148,3 +175,6 @@ pub fn animate_jump(
         }
     }
 }
+
+// TODO 角色蓄力效果
+pub fn animate_player_accumulation() {}

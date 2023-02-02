@@ -26,6 +26,7 @@ pub fn setup_first_platform(
 }
 
 // 生成下一个平台
+// TODO 圆柱形平台
 pub fn generate_next_platform(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -64,7 +65,17 @@ pub fn generate_next_platform(
     }
 }
 
+// TODO 平台蓄力效果
+pub fn animate_platform_accumulation() {}
+
 fn rand_platform_color() -> Color {
     let mut rng = rand::thread_rng();
     Color::rgb(rng.gen(), rng.gen(), rng.gen())
+}
+
+// 是否落到平台上
+pub fn is_landed_on_platform(platform_pos: Vec3, landing_pos: Vec3) -> bool {
+    dbg!(platform_pos);
+    dbg!(landing_pos);
+    (landing_pos.x - platform_pos.x).abs() < 0.5 && (landing_pos.z - platform_pos.z).abs() < 0.5
 }

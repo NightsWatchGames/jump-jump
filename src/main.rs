@@ -20,6 +20,7 @@ fn main() {
             end_pos: Vec3::ZERO,
             completed: true,
         })
+        .add_event::<GameOverEvent>()
         .add_startup_system(setup_camera)
         .add_startup_system(setup_ground)
         .add_startup_system(setup_first_platform)
@@ -30,5 +31,6 @@ fn main() {
         .add_system(player_jump)
         .add_system(update_scoreboard)
         .add_system(animate_jump)
+        .add_system(handle_game_over_event)
         .run();
 }
