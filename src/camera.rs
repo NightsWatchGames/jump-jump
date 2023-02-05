@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::player::{JumpState, Player, INITIAL_PLAYER_POS};
+use crate::player::{FallState, JumpState, Player, INITIAL_PLAYER_POS};
 
 pub const INITIAL_CAMERA_POS: Vec3 = Vec3::new(-5.0, 8.0, 5.0);
 
@@ -58,9 +58,10 @@ pub fn move_camera(
     mut q_camera: Query<&mut Transform, (With<Camera>, Without<Player>)>,
     mut camera_move_state: ResMut<CameraMoveState>,
     jump_state: Res<JumpState>,
+    fall_state: Res<FallState>,
 ) {
-    // 跳跃期间不移动相机
-    if jump_state.completed {
+    // 跳跃或摔落期间不移动相机
+    if jump_state.completed && fall_state.completed {
         let player = q_player.single();
         let mut camera = q_camera.single_mut();
         let camera_destination = INITIAL_CAMERA_POS + player.translation;

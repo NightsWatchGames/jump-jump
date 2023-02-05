@@ -35,6 +35,30 @@ impl Default for JumpState {
     }
 }
 
+// 摔落状态
+#[derive(Debug, Resource)]
+pub struct FallState {
+    pub pos: Vec3,
+    pub fall_type: FallType,
+    pub completed: bool,
+}
+#[derive(Debug)]
+pub enum FallType {
+    // 笔直下落
+    Straight,
+    // 先倾斜再下落，Vec3代表倾斜方向
+    Tilt(Vec3),
+}
+impl Default for FallState {
+    fn default() -> Self {
+        Self {
+            pos: Vec3::ZERO,
+            fall_type: FallType::Straight,
+            completed: true,
+        }
+    }
+}
+
 #[derive(Debug, Component)]
 pub struct Player;
 
@@ -68,8 +92,8 @@ pub fn player_jump(
     mut score: ResMut<Score>,
     mut accumulator: ResMut<Accumulator>,
     mut jump_state: ResMut<JumpState>,
+    mut fall_state: ResMut<FallState>,
     time: Res<Time>,
-    mut game_over_ew: EventWriter<GameOverEvent>,
     q_player: Query<&Transform, With<Player>>,
     q_current_platform: Query<(Entity, &Transform, &PlatformShape), With<CurrentPlatform>>,
     q_next_platform: Query<
@@ -111,18 +135,18 @@ pub fn player_jump(
         dbg!(player.translation);
         dbg!(accumulator.0.as_ref().unwrap().elapsed().as_secs_f32());
 
+        jump_state.start_pos = player.translation;
+        jump_state.end_pos = landing_pos;
+        // 跳跃动画时长随距离而变化
+        jump_state.animation_duration =
+            (accumulator.0.as_ref().unwrap().elapsed().as_secs_f32() / 2.0).max(0.5);
+        jump_state.completed = false;
+
         // 蓄力极短，跳跃后仍在当前平台上
         // 蓄力正常，跳跃到下一平台
         if current_platform_shape.is_landed_on_platform(current_platform.translation, landing_pos)
             || next_platform_shape.is_landed_on_platform(next_platform.translation, landing_pos)
         {
-            jump_state.start_pos = player.translation;
-            jump_state.end_pos = landing_pos;
-            // 跳跃动画时长随距离而变化
-            jump_state.animation_duration =
-                (accumulator.0.as_ref().unwrap().elapsed().as_secs_f32() / 2.0).max(0.5);
-            jump_state.completed = false;
-
             if next_platform_shape.is_landed_on_platform(next_platform.translation, landing_pos) {
                 // 分数加1
                 score.0 += 1;
@@ -137,10 +161,11 @@ pub fn player_jump(
                     .remove::<CurrentPlatform>();
             }
 
-        // 蓄力不足或蓄力过度，游戏结束
+        // TODO 蓄力不足或蓄力过度，角色摔落
         } else {
-            info!("Game over!");
-            game_over_ew.send_default();
+            fall_state.pos = player.translation;
+            fall_state.fall_type = FallType::Straight;
+            fall_state.completed = false;
         }
 
         // 结束蓄力
@@ -209,6 +234,31 @@ pub fn animate_player_accumulation(
         }
         None => {
             player.scale = Vec3::ONE;
+        }
+    }
+}
+
+// TODO
+pub fn animate_fall(
+    mut fall_state: ResMut<FallState>,
+    time: Res<Time>,
+    mut game_over_ew: EventWriter<GameOverEvent>,
+    mut q_player: Query<&mut Transform, With<Player>>,
+) {
+    if !fall_state.completed {
+        match fall_state.fall_type {
+            FallType::Straight => {
+                let mut player = q_player.single_mut();
+                if player.translation.y < 0.5 {
+                    // 已摔落在地
+                    fall_state.completed = true;
+                    info!("Game over!");
+                    game_over_ew.send_default();
+                } else {
+                    player.translation.y -= 0.7 * time.delta_seconds();
+                }
+            }
+            FallType::Tilt(direction) => {}
         }
     }
 }
