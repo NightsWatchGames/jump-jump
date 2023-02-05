@@ -1,5 +1,5 @@
 use bevy::prelude::{shape::CapsuleUvProfile, *};
-use std::f32::consts::{PI, TAU};
+use std::f32::consts::{FRAC_PI_2, PI, TAU};
 use std::time::Instant;
 
 use crate::platform::PlatformShape;
@@ -34,12 +34,24 @@ impl Default for JumpState {
         }
     }
 }
+impl JumpState {
+    pub fn animate_jump(&mut self, start_pos: Vec3, end_pos: Vec3, animation_duration: f32) {
+        info!("Start jump!");
+        self.start_pos = start_pos;
+        self.end_pos = end_pos;
+        self.animation_duration = animation_duration;
+        self.completed = false;
+    }
+}
 
 // 摔落状态
 #[derive(Debug, Resource)]
 pub struct FallState {
     pub pos: Vec3,
     pub fall_type: FallType,
+    // 是否完成倾斜动作
+    pub tilt_completed: bool,
+    // 是否所有动作完成
     pub completed: bool,
 }
 #[derive(Debug)]
@@ -54,8 +66,24 @@ impl Default for FallState {
         Self {
             pos: Vec3::ZERO,
             fall_type: FallType::Straight,
+            tilt_completed: true,
             completed: true,
         }
+    }
+}
+impl FallState {
+    pub fn animate_straight_fall(&mut self, pos: Vec3) {
+        info!("Start straight fall!");
+        self.pos = pos;
+        self.fall_type = FallType::Straight;
+        self.completed = false;
+    }
+    pub fn animate_tilt_fall(&mut self, pos: Vec3, direction: Vec3) {
+        info!("Start tilt fall!");
+        self.pos = pos;
+        self.fall_type = FallType::Tilt(direction);
+        self.tilt_completed = false;
+        self.completed = false;
     }
 }
 
@@ -102,11 +130,11 @@ pub fn player_jump(
     >,
 ) {
     // 如果上一跳未完成则忽略
-    if buttons.just_pressed(MouseButton::Left) && jump_state.completed {
+    if buttons.just_pressed(MouseButton::Left) && jump_state.completed && fall_state.completed {
         // 开始蓄力
         accumulator.0 = time.last_update();
     }
-    if buttons.just_released(MouseButton::Left) && jump_state.completed {
+    if buttons.just_released(MouseButton::Left) && jump_state.completed && fall_state.completed {
         if q_next_platform.is_empty() {
             warn!("There is no next platform");
             return;
@@ -135,12 +163,12 @@ pub fn player_jump(
         dbg!(player.translation);
         dbg!(accumulator.0.as_ref().unwrap().elapsed().as_secs_f32());
 
-        jump_state.start_pos = player.translation;
-        jump_state.end_pos = landing_pos;
         // 跳跃动画时长随距离而变化
-        jump_state.animation_duration =
-            (accumulator.0.as_ref().unwrap().elapsed().as_secs_f32() / 2.0).max(0.5);
-        jump_state.completed = false;
+        jump_state.animate_jump(
+            player.translation,
+            landing_pos,
+            (accumulator.0.as_ref().unwrap().elapsed().as_secs_f32() / 2.0).max(0.5),
+        );
 
         // 蓄力极短，跳跃后仍在当前平台上
         // 蓄力正常，跳跃到下一平台
@@ -161,11 +189,43 @@ pub fn player_jump(
                     .remove::<CurrentPlatform>();
             }
 
-        // TODO 蓄力不足或蓄力过度，角色摔落
+        // 蓄力不足或蓄力过度，角色摔落
         } else {
-            fall_state.pos = player.translation;
-            fall_state.fall_type = FallType::Straight;
-            fall_state.completed = false;
+            if current_platform_shape.is_touched_player(
+                current_platform.translation,
+                landing_pos,
+                0.2,
+            ) {
+                info!("Player touched current platform");
+                let fall_direction = if landing_pos.x == player.translation.x {
+                    Vec3::NEG_X
+                } else {
+                    Vec3::NEG_Z
+                };
+                fall_state.animate_tilt_fall(landing_pos, fall_direction);
+            } else if next_platform_shape.is_touched_player(
+                next_platform.translation,
+                landing_pos,
+                0.2,
+            ) {
+                info!("Player touched next platform");
+                let fall_direction = if landing_pos.x == player.translation.x {
+                    if landing_pos.z < next_platform.translation.z {
+                        Vec3::NEG_X
+                    } else {
+                        Vec3::X
+                    }
+                } else {
+                    if landing_pos.x < next_platform.translation.x {
+                        Vec3::Z
+                    } else {
+                        Vec3::NEG_Z
+                    }
+                };
+                fall_state.animate_tilt_fall(landing_pos, fall_direction);
+            } else {
+                fall_state.animate_straight_fall(landing_pos);
+            }
         }
 
         // 结束蓄力
@@ -238,7 +298,6 @@ pub fn animate_player_accumulation(
     }
 }
 
-// TODO
 pub fn animate_fall(
     mut fall_state: ResMut<FallState>,
     time: Res<Time>,
@@ -246,9 +305,9 @@ pub fn animate_fall(
     mut q_player: Query<&mut Transform, With<Player>>,
 ) {
     if !fall_state.completed {
+        let mut player = q_player.single_mut();
         match fall_state.fall_type {
             FallType::Straight => {
-                let mut player = q_player.single_mut();
                 if player.translation.y < 0.5 {
                     // 已摔落在地
                     fall_state.completed = true;
@@ -258,7 +317,35 @@ pub fn animate_fall(
                     player.translation.y -= 0.7 * time.delta_seconds();
                 }
             }
-            FallType::Tilt(direction) => {}
+            FallType::Tilt(direction) => {
+                if !fall_state.tilt_completed {
+                    // 倾斜
+                    let around_point = Vec3::new(
+                        fall_state.pos.x,
+                        INITIAL_PLAYER_POS.y - 0.5,
+                        fall_state.pos.z,
+                    );
+                    if player.translation.y < around_point.y {
+                        fall_state.tilt_completed = true;
+                    } else {
+                        let quat = Quat::from_axis_angle(
+                            direction,
+                            1.0 * FRAC_PI_2 * time.delta_seconds(),
+                        );
+                        player.rotate_around(around_point, quat);
+                    }
+                } else {
+                    // 下坠
+                    if player.translation.y < 0.2 {
+                        // 已摔落在地
+                        fall_state.completed = true;
+                        info!("Game over!");
+                        game_over_ew.send_default();
+                    } else {
+                        player.translation.y -= 0.7 * time.delta_seconds();
+                    }
+                }
+            }
         }
     }
 }

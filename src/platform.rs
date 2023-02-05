@@ -40,6 +40,23 @@ impl PlatformShape {
             }
         }
     }
+    // 是否接触到角色
+    pub fn is_touched_player(
+        &self,
+        platform_pos: Vec3,
+        landing_pos: Vec3,
+        player_radius: f32,
+    ) -> bool {
+        match self {
+            Self::Box => {
+                (landing_pos.x - platform_pos.x).abs() < (1.5 / 2.0 + player_radius)
+                    && (landing_pos.z - platform_pos.z).abs() < (1.5 / 2.0 + player_radius)
+            }
+            Self::Cylinder => {
+                unimplemented!("Waiting bevy 0.10 release")
+            }
+        }
+    }
 }
 
 pub fn setup_first_platform(
@@ -72,7 +89,7 @@ pub fn generate_next_platform(
     if q_next_platform.is_empty() {
         for current_platform in &q_current_platform {
             let mut rng = rand::thread_rng();
-            let rand_distance = rng.gen_range(2.0..4.0);
+            let rand_distance = rng.gen_range(2.5..4.0);
             let next_pos = if rng.gen_bool(0.5) {
                 Vec3::new(
                     current_platform.translation.x + rand_distance,
