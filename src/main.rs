@@ -16,6 +16,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(HanabiPlugin)
+        .add_state(GameState::MainMenu)
         .insert_resource(CameraMoveState::default())
         .insert_resource(Score(0))
         .insert_resource(Accumulator(None))
@@ -25,21 +26,48 @@ fn main() {
             Duration::from_millis(500),
             TimerMode::Once,
         )))
-        .add_event::<GameOverEvent>()
         .add_startup_system(setup_camera)
         .add_startup_system(setup_ground)
-        .add_startup_system(setup_first_platform)
-        .add_startup_system(setup_player)
-        .add_startup_system(setup_scoreboard)
-        .add_system(generate_next_platform)
-        .add_system(move_camera)
-        .add_system(player_jump)
-        .add_system(update_scoreboard)
-        .add_system(animate_jump)
-        .add_system(animate_fall)
-        .add_system(animate_player_accumulation)
-        .add_system(animate_platform_accumulation)
-        .add_system(animate_accumulation_particle_effect)
-        .add_system(handle_game_over_event)
+        // Main Menu
+        .add_system_set(
+            SystemSet::on_enter(GameState::MainMenu)
+                .with_system(setup_main_menu)
+                .with_system(clear_player)
+                .with_system(clear_platforms)
+                .with_system(despawn_scoreboard),
+        )
+        .add_system_set(SystemSet::on_update(GameState::MainMenu).with_system(click_button))
+        .add_system_set(
+            SystemSet::on_exit(GameState::MainMenu).with_system(despawn_screen::<OnMainMenuScreen>),
+        )
+        // Playing
+        .add_system_set(
+            SystemSet::on_enter(GameState::Playing)
+                .with_system(clear_player)
+                .with_system(clear_platforms)
+                .with_system(despawn_scoreboard)
+                .with_system(setup_first_platform.after(clear_platforms))
+                .with_system(setup_player.after(clear_player))
+                .with_system(setup_scoreboard.after(despawn_scoreboard)),
+        )
+        .add_system_set(
+            SystemSet::on_update(GameState::Playing)
+                .with_system(generate_next_platform)
+                .with_system(move_camera)
+                .with_system(player_jump)
+                .with_system(update_scoreboard)
+                .with_system(animate_jump)
+                .with_system(animate_fall)
+                .with_system(animate_player_accumulation)
+                .with_system(animate_platform_accumulation)
+                .with_system(animate_accumulation_particle_effect),
+        )
+        // GameOver
+        .add_system_set(SystemSet::on_enter(GameState::GameOver).with_system(setup_game_over_menu))
+        .add_system_set(SystemSet::on_update(GameState::GameOver).with_system(click_button))
+        .add_system_set(
+            SystemSet::on_exit(GameState::GameOver)
+                .with_system(despawn_screen::<OnGameOverMenuScreen>),
+        )
         .run();
 }

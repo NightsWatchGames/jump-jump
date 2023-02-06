@@ -138,6 +138,12 @@ pub fn animate_platform_accumulation(
     }
 }
 
+pub fn clear_platforms(mut commands: Commands, q_platforms: Query<Entity, With<PlatformShape>>) {
+    for platform in &q_platforms {
+        commands.entity(platform).despawn();
+    }
+}
+
 fn rand_platform_color() -> Color {
     let mut rng = rand::thread_rng();
     Color::rgb(rng.gen(), rng.gen(), rng.gen())

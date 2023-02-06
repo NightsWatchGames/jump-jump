@@ -7,6 +7,7 @@
 - [x] 自动生成平台
 - [ ] 飘分效果
 - [x] 分数统计
+- [x] 游戏UI
 
 ## 参考
 - https://github.com/zhenghongzhi/Unity-JumpJump

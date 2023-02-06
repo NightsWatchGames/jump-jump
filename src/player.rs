@@ -4,7 +4,7 @@ use std::f32::consts::{FRAC_PI_2, PI, TAU};
 use std::time::Instant;
 
 use crate::platform::PlatformShape;
-use crate::ui::GameOverEvent;
+use crate::ui::GameState;
 use crate::{
     platform::{CurrentPlatform, NextPlatform},
     ui::Score,
@@ -305,7 +305,7 @@ pub fn animate_player_accumulation(
 pub fn animate_fall(
     mut fall_state: ResMut<FallState>,
     time: Res<Time>,
-    mut game_over_ew: EventWriter<GameOverEvent>,
+    mut game_state: ResMut<State<GameState>>,
     mut q_player: Query<&mut Transform, With<Player>>,
 ) {
     if !fall_state.completed {
@@ -316,7 +316,7 @@ pub fn animate_fall(
                     // 已摔落在地
                     fall_state.completed = true;
                     info!("Game over!");
-                    game_over_ew.send_default();
+                    game_state.set(GameState::GameOver).unwrap();
                 } else {
                     player.translation.y -= 0.7 * time.delta_seconds();
                 }
@@ -344,7 +344,7 @@ pub fn animate_fall(
                         // 已摔落在地
                         fall_state.completed = true;
                         info!("Game over!");
-                        game_over_ew.send_default();
+                        game_state.set(GameState::GameOver).unwrap();
                     } else {
                         player.translation.y -= 0.7 * time.delta_seconds();
                     }
@@ -364,8 +364,7 @@ pub fn animate_accumulation_particle_effect(
     q_player: Query<&Transform, (With<Player>, Without<ParticleEffect>)>,
 ) {
     if accumulator.0.is_some() {
-        // 开启粒子特效
-        info!("Start particle effect");
+        // 生成粒子特效
         effect_timer.0.tick(time.delta());
         if effect_timer.0.just_finished() {
             let player = q_player.single();
@@ -426,5 +425,11 @@ pub fn animate_accumulation_particle_effect(
         for (entity, _, _) in &mut q_effect {
             commands.entity(entity).despawn();
         }
+    }
+}
+
+pub fn clear_player(mut commands: Commands, q_player: Query<Entity, With<Player>>) {
+    for player in &q_player {
+        commands.entity(player).despawn();
     }
 }
