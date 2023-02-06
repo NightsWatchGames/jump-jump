@@ -413,6 +413,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_hanabi"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33ee17a132d12ae42466b0e300e9b3dd4953d2c060664e89f06be3164f2b1e8d"
+dependencies = [
+ "anyhow",
+ "bevy",
+ "bitflags",
+ "bytemuck",
+ "copyless",
+ "rand",
+ "rand_pcg",
+ "ron",
+ "serde",
+]
+
+[[package]]
 name = "bevy_hierarchy"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -885,9 +902,9 @@ checksum = "0d261e256854913907f67ed06efbc3338dfe6179796deefc1ff763fc1aee5535"
 
 [[package]]
 name = "bytemuck"
-version = "1.13.0"
+version = "1.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c041d3eab048880cb0b86b256447da3f18859a163c3b8d8893f4e6368abe6393"
+checksum = "aaa3a8d9a1ca92e282c96a32d6511b695d7d994d1d102ba85d279f9b2756947f"
 dependencies = [
  "bytemuck_derive",
 ]
@@ -1058,6 +1075,12 @@ name = "const_panic"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "58baae561b85ca19b3122a9ddd35c8ec40c3bcd14fe89921824eae73f7baffbf"
+
+[[package]]
+name = "copyless"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2df960f5d869b2dd8532793fde43eb5427cceb126c929747a26823ab0eeb536"
 
 [[package]]
 name = "core-foundation"
@@ -1760,6 +1783,7 @@ name = "jump-jump"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_hanabi",
  "rand",
 ]
 
@@ -2412,6 +2436,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "rand_pcg"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "59cad018caf63deb318e5a4586d99a24424a364f40f1e5778c29aca23f4fc73e"
+dependencies = [
+ "rand_core",
 ]
 
 [[package]]

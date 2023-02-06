@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    core_pipeline::{bloom::BloomSettings, clear_color::ClearColorConfig},
+    prelude::*,
+};
 
 use crate::player::{FallState, JumpState, Player, INITIAL_PLAYER_POS};
 
@@ -33,10 +36,18 @@ pub fn setup_camera(mut commands: Commands) {
     });
 
     // camera
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_translation(INITIAL_CAMERA_POS).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+    commands.spawn((
+        Camera3dBundle {
+            transform: Transform::from_translation(INITIAL_CAMERA_POS)
+                .looking_at(Vec3::ZERO, Vec3::Y),
+            camera: Camera {
+                hdr: true,
+                ..default()
+            },
+            ..default()
+        },
+        BloomSettings::default(),
+    ));
 }
 
 pub fn setup_ground(

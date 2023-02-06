@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.9.1"
+bevy_hanabi = "0.5.2"
 rand = "0.8.0"
