@@ -76,6 +76,7 @@ fn main() {
                 .with_system(setup_first_platform.after(clear_platforms))
                 .with_system(setup_player.after(clear_player))
                 .with_system(setup_scoreboard.after(despawn_scoreboard))
+                .with_system(reset_score)
                 .with_system(reset_prepare_jump_timer),
         )
         .add_system_set(

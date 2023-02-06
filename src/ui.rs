@@ -234,3 +234,7 @@ pub fn despawn_scoreboard(mut commands: Commands, q_scoreboard: Query<Entity, Wi
         commands.entity(scoreboard).despawn();
     }
 }
+
+pub fn reset_score(mut score: ResMut<Score>) {
+    score.0 = 0;
+}
