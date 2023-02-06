@@ -16,6 +16,9 @@ pub const INITIAL_PLAYER_POS: Vec3 = Vec3::new(0.0, 1.5, 0.0);
 #[derive(Debug, Resource)]
 pub struct Accumulator(pub Option<Instant>);
 
+#[derive(Debug, Resource)]
+pub struct PrepareJumpTimer(pub Timer);
+
 // 跳跃状态
 #[derive(Debug, Resource)]
 pub struct JumpState {
@@ -125,6 +128,7 @@ pub fn player_jump(
     mut accumulator: ResMut<Accumulator>,
     mut jump_state: ResMut<JumpState>,
     mut fall_state: ResMut<FallState>,
+    prepare_jump_timer: Res<PrepareJumpTimer>,
     time: Res<Time>,
     q_player: Query<&Transform, With<Player>>,
     q_current_platform: Query<(Entity, &Transform, &PlatformShape), With<CurrentPlatform>>,
@@ -133,6 +137,10 @@ pub fn player_jump(
         (With<NextPlatform>, Without<Player>),
     >,
 ) {
+    if !prepare_jump_timer.0.finished() {
+        // 防止从主菜单点击进入Playing状态时立即跳一次
+        return;
+    }
     // 如果上一跳未完成则忽略
     if buttons.just_pressed(MouseButton::Left) && jump_state.completed && fall_state.completed {
         // 开始蓄力
@@ -432,4 +440,12 @@ pub fn clear_player(mut commands: Commands, q_player: Query<Entity, With<Player>
     for player in &q_player {
         commands.entity(player).despawn();
     }
+}
+
+pub fn prepare_jump(time: Res<Time>, mut prepare_timer: ResMut<PrepareJumpTimer>) {
+    prepare_timer.0.tick(time.delta());
+}
+
+pub fn reset_prepare_jump_timer(mut prepare_timer: ResMut<PrepareJumpTimer>) {
+    prepare_timer.0.reset();
 }

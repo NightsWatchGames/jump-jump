@@ -26,6 +26,10 @@ fn main() {
             Duration::from_millis(500),
             TimerMode::Once,
         )))
+        .insert_resource(PrepareJumpTimer(Timer::new(
+            Duration::from_millis(200),
+            TimerMode::Once,
+        )))
         .add_startup_system(setup_camera)
         .add_startup_system(setup_ground)
         // Main Menu
@@ -48,10 +52,12 @@ fn main() {
                 .with_system(despawn_scoreboard)
                 .with_system(setup_first_platform.after(clear_platforms))
                 .with_system(setup_player.after(clear_player))
-                .with_system(setup_scoreboard.after(despawn_scoreboard)),
+                .with_system(setup_scoreboard.after(despawn_scoreboard))
+                .with_system(reset_prepare_jump_timer),
         )
         .add_system_set(
             SystemSet::on_update(GameState::Playing)
+                .with_system(prepare_jump)
                 .with_system(generate_next_platform)
                 .with_system(move_camera)
                 .with_system(player_jump)
