@@ -13,9 +13,32 @@ mod player;
 mod ui;
 
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(HanabiPlugin)
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins);
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        app.add_plugin(HanabiPlugin);
+    }
+
+    let mut game_playing_set_on_update = SystemSet::on_update(GameState::Playing)
+        .with_system(prepare_jump)
+        .with_system(generate_next_platform)
+        .with_system(move_camera)
+        .with_system(player_jump)
+        .with_system(update_scoreboard)
+        .with_system(animate_jump)
+        .with_system(animate_fall)
+        .with_system(animate_player_accumulation)
+        .with_system(animate_platform_accumulation);
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        game_playing_set_on_update = game_playing_set_on_update.with_system(animate_accumulation_particle_effect);
+    }
+
+    app
+        // .add_plugins(DefaultPlugins)
         .add_state(GameState::MainMenu)
         .insert_resource(CameraMoveState::default())
         .insert_resource(Score(0))
@@ -56,17 +79,7 @@ fn main() {
                 .with_system(reset_prepare_jump_timer),
         )
         .add_system_set(
-            SystemSet::on_update(GameState::Playing)
-                .with_system(prepare_jump)
-                .with_system(generate_next_platform)
-                .with_system(move_camera)
-                .with_system(player_jump)
-                .with_system(update_scoreboard)
-                .with_system(animate_jump)
-                .with_system(animate_fall)
-                .with_system(animate_player_accumulation)
-                .with_system(animate_platform_accumulation)
-                .with_system(animate_accumulation_particle_effect),
+            game_playing_set_on_update
         )
         // GameOver
         .add_system_set(SystemSet::on_enter(GameState::GameOver).with_system(setup_game_over_menu))

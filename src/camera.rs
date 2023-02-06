@@ -1,5 +1,5 @@
 use bevy::{
-    core_pipeline::{bloom::BloomSettings, clear_color::ClearColorConfig},
+    core_pipeline::{bloom::BloomSettings},
     prelude::*,
 };
 

@@ -1,7 +1,7 @@
 use bevy::prelude::{shape::CapsuleUvProfile, *};
+use bevy::utils::Instant;
 use bevy_hanabi::prelude::*;
 use std::f32::consts::{FRAC_PI_2, PI, TAU};
-use std::time::Instant;
 
 use crate::platform::PlatformShape;
 use crate::ui::GameState;
