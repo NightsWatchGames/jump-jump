@@ -29,9 +29,9 @@ wasm-bindgen --out-dir ./out/ --target web ./target/wasm32-unknown-unknown/relea
 ## 游戏展示
 视频演示：[B站]()
 
-![main menu](https://raw.githubusercontent.com/NightsWatchGames/jump-jump/main/screenshots/main_menu.png)
-![game playing](https://raw.githubusercontent.com/NightsWatchGames/jump-jump/main/screenshots/game_playing.png)
-![game over](https://raw.githubusercontent.com/NightsWatchGames/jump-jump/main/screenshots/game_over.png)
+![main menu](https://raw.githubusercontent.com/NightsWatchGames/jump-jump/master/screenshots/main_menu.png)
+![game playing](https://raw.githubusercontent.com/NightsWatchGames/jump-jump/master/screenshots/game_playing.png)
+![game over](https://raw.githubusercontent.com/NightsWatchGames/jump-jump/master/screenshots/game_over.png)
 
 ## 参考
 - https://github.com/zhenghongzhi/Unity-JumpJump
