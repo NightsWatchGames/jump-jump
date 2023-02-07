@@ -4,7 +4,7 @@ use bevy_hanabi::prelude::*;
 use std::f32::consts::{FRAC_PI_2, PI, TAU};
 
 use crate::platform::PlatformShape;
-use crate::ui::{GameState, ScoreUpEvent, ScoreUpQueue};
+use crate::ui::{GameSounds, GameState, ScoreUpEvent, ScoreUpQueue};
 use crate::{
     platform::{CurrentPlatform, NextPlatform},
     ui::Score,
@@ -26,6 +26,7 @@ pub struct JumpState {
     pub end_pos: Vec3,
     // 跳跃动画时长，秒
     pub animation_duration: f32,
+    pub falled: bool,
     pub completed: bool,
 }
 impl Default for JumpState {
@@ -34,6 +35,7 @@ impl Default for JumpState {
             start_pos: Vec3::ZERO,
             end_pos: Vec3::ZERO,
             animation_duration: 0.0,
+            falled: false,
             completed: true,
         }
     }
@@ -57,6 +59,7 @@ pub struct FallState {
     pub tilt_completed: bool,
     // 是否所有动作完成
     pub completed: bool,
+    pub played_sound: bool,
 }
 #[derive(Debug)]
 pub enum FallType {
@@ -72,6 +75,7 @@ impl Default for FallState {
             fall_type: FallType::Straight,
             tilt_completed: true,
             completed: true,
+            played_sound: true,
         }
     }
 }
@@ -81,6 +85,7 @@ impl FallState {
         self.pos = pos;
         self.fall_type = FallType::Straight;
         self.completed = false;
+        self.played_sound = false;
     }
     pub fn animate_tilt_fall(&mut self, pos: Vec3, direction: Vec3) {
         info!("Start tilt fall!");
@@ -88,6 +93,7 @@ impl FallState {
         self.fall_type = FallType::Tilt(direction);
         self.tilt_completed = false;
         self.completed = false;
+        self.played_sound = false;
     }
 }
 
@@ -101,6 +107,8 @@ pub fn setup_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    audio: Res<Audio>,
+    game_sounds: Res<GameSounds>,
 ) {
     commands.spawn((
         PbrBundle {
@@ -119,6 +127,7 @@ pub fn setup_player(
         },
         Player,
     ));
+    audio.play(game_sounds.start.clone());
 }
 
 pub fn player_jump(
@@ -131,6 +140,8 @@ pub fn player_jump(
     mut score_up_queue: ResMut<ScoreUpQueue>,
     prepare_jump_timer: Res<PrepareJumpTimer>,
     time: Res<Time>,
+    audio: Res<Audio>,
+    game_sounds: Res<GameSounds>,
     q_player: Query<&Transform, With<Player>>,
     q_current_platform: Query<(Entity, &Transform, &PlatformShape), With<CurrentPlatform>>,
     q_next_platform: Query<
@@ -188,6 +199,7 @@ pub fn player_jump(
         if current_platform_shape.is_landed_on_platform(current_platform.translation, landing_pos)
             || next_platform_shape.is_landed_on_platform(next_platform.translation, landing_pos)
         {
+            jump_state.falled = false;
             if next_platform_shape.is_landed_on_platform(next_platform.translation, landing_pos) {
                 // 分数加1
                 score.0 += 1;
@@ -206,6 +218,7 @@ pub fn player_jump(
 
         // 蓄力不足或蓄力过度，角色摔落
         } else {
+            jump_state.falled = true;
             if current_platform_shape.is_touched_player(
                 current_platform.translation,
                 landing_pos,
@@ -252,6 +265,8 @@ pub fn animate_jump(
     mut jump_state: ResMut<JumpState>,
     time: Res<Time>,
     mut q_player: Query<&mut Transform, With<Player>>,
+    audio: Res<Audio>,
+    game_sounds: Res<GameSounds>,
 ) {
     if !jump_state.completed {
         let mut player = q_player.single_mut();
@@ -281,6 +296,9 @@ pub fn animate_jump(
 
             // 结束跳跃
             jump_state.completed = true;
+            if !jump_state.falled {
+                audio.play(game_sounds.success.clone());
+            }
         } else {
             player.translate_around(around_point, quat);
 
@@ -315,11 +333,18 @@ pub fn animate_player_accumulation(
 
 pub fn animate_fall(
     mut fall_state: ResMut<FallState>,
+    jump_state: Res<JumpState>,
     time: Res<Time>,
     mut game_state: ResMut<State<GameState>>,
     mut q_player: Query<&mut Transform, With<Player>>,
+    audio: Res<Audio>,
+    game_sounds: Res<GameSounds>,
 ) {
-    if !fall_state.completed {
+    if !fall_state.completed && jump_state.completed {
+        if !fall_state.played_sound {
+            audio.play(game_sounds.fall.clone());
+            fall_state.played_sound = true;
+        }
         let mut player = q_player.single_mut();
         match fall_state.fall_type {
             FallType::Straight => {

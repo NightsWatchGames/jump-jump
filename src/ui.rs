@@ -17,6 +17,14 @@ pub struct UiImageHandles {
     pub btn_restart: Handle<Image>,
 }
 
+#[derive(Debug, Resource)]
+pub struct GameSounds {
+    pub start: Handle<AudioSource>,
+    pub accumulation: Handle<AudioSource>,
+    pub fall: Handle<AudioSource>,
+    pub success: Handle<AudioSource>,
+}
+
 #[derive(Component)]
 pub enum MenuButtonAction {
     StartGame,
@@ -51,6 +59,15 @@ pub fn setup_ui_images(mut commands: Commands, assert_server: Res<AssetServer>) 
         btn_home: assert_server.load("texture/btn_home.png"),
         btn_start: assert_server.load("texture/btn_start.png"),
         btn_restart: assert_server.load("texture/btn_restart.png"),
+    });
+}
+
+pub fn setup_game_sounds(mut commands: Commands, assert_server: Res<AssetServer>) {
+    commands.insert_resource(GameSounds {
+        start: assert_server.load("sounds/start.mp3"),
+        accumulation: assert_server.load("sounds/accumulation.mp3"),
+        fall: assert_server.load("sounds/fall.mp3"),
+        success: assert_server.load("sounds/success.mp3"),
     });
 }
 
