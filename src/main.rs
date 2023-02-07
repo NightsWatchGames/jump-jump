@@ -54,6 +54,7 @@ fn main() {
         )))
         .add_startup_system(setup_camera)
         .add_startup_system(setup_ground)
+        .add_startup_system(setup_ui_images)
         // Main Menu
         .add_system_set(
             SystemSet::on_enter(GameState::MainMenu)

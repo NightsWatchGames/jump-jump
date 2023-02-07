@@ -7,6 +7,14 @@ pub enum GameState {
     GameOver,
 }
 
+#[derive(Debug, Resource)]
+pub struct UiImageHandles {
+    pub title: Handle<Image>,
+    pub btn_home: Handle<Image>,
+    pub btn_start: Handle<Image>,
+    pub btn_restart: Handle<Image>,
+}
+
 #[derive(Component)]
 pub enum MenuButtonAction {
     StartGame,
@@ -26,7 +34,16 @@ pub struct Score(pub u32);
 #[derive(Debug, Component)]
 pub struct Scoreboard;
 
-pub fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_ui_images(mut commands: Commands, assert_server: Res<AssetServer>) {
+    commands.insert_resource(UiImageHandles {
+        title: assert_server.load("texture/title.png"),
+        btn_home: assert_server.load("texture/btn_home.png"),
+        btn_start: assert_server.load("texture/btn_start.png"),
+        btn_restart: assert_server.load("texture/btn_restart.png"),
+    });
+}
+
+pub fn setup_main_menu(mut commands: Commands, ui_images: Res<UiImageHandles>) {
     commands
         .spawn((
             NodeBundle {
@@ -53,7 +70,7 @@ pub fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 .with_children(|parent| {
                     // 标题
                     parent.spawn(ImageBundle {
-                        image: asset_server.load("texture/title.png").into(),
+                        image: ui_images.title.clone().into(),
                         ..default()
                     });
 
@@ -67,7 +84,7 @@ pub fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 align_items: AlignItems::Center,
                                 ..default()
                             },
-                            image: asset_server.load("texture/btn_start.png").into(),
+                            image: ui_images.btn_start.clone().into(),
                             ..default()
                         },
                         MenuButtonAction::StartGame,
@@ -76,7 +93,7 @@ pub fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-pub fn setup_game_over_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_game_over_menu(mut commands: Commands, ui_images: Res<UiImageHandles>) {
     commands
         .spawn((
             NodeBundle {
@@ -103,7 +120,7 @@ pub fn setup_game_over_menu(mut commands: Commands, asset_server: Res<AssetServe
                 .with_children(|parent| {
                     // 标题
                     parent.spawn(ImageBundle {
-                        image: asset_server.load("texture/title.png").into(),
+                        image: ui_images.title.clone().into(),
                         ..default()
                     });
 
@@ -121,20 +138,19 @@ pub fn setup_game_over_menu(mut commands: Commands, asset_server: Res<AssetServe
                             parent.spawn((
                                 ButtonBundle {
                                     style: Style {
-                                        size: Size::new(Val::Px(50.), Val::Px(50.)),
+                                        size: Size::new(Val::Px(40.), Val::Px(40.)),
                                         margin: UiRect::all(Val::Px(10.0)),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
                                         ..default()
                                     },
-                                    image: asset_server.load("texture/btn_back.png").into(),
-                                    background_color: Color::YELLOW_GREEN.into(),
+                                    image: ui_images.btn_home.clone().into(),
                                     ..default()
                                 },
                                 MenuButtonAction::BackToMainMenu,
                             ));
 
-                            // 开始按钮
+                            // 重新开始按钮
                             parent.spawn((
                                 ButtonBundle {
                                     style: Style {
@@ -144,7 +160,7 @@ pub fn setup_game_over_menu(mut commands: Commands, asset_server: Res<AssetServe
                                         align_items: AlignItems::Center,
                                         ..default()
                                     },
-                                    image: asset_server.load("texture/btn_restart.png").into(),
+                                    image: ui_images.btn_restart.clone().into(),
                                     ..default()
                                 },
                                 MenuButtonAction::RestartGame,
