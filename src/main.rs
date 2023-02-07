@@ -56,6 +56,7 @@ fn main() {
             TimerMode::Once,
         )))
         .insert_resource(ScoreUpQueue(Vec::new()))
+        .insert_resource(AccumulationSoundController(None))
         .add_startup_system(setup_camera)
         .add_startup_system(setup_ground)
         .add_startup_system(setup_ui_images)

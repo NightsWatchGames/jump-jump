@@ -1,3 +1,4 @@
+use bevy::audio::AudioSink;
 use bevy::prelude::{shape::CapsuleUvProfile, *};
 use bevy::utils::Instant;
 use bevy_hanabi::prelude::*;
@@ -15,6 +16,9 @@ pub const INITIAL_PLAYER_POS: Vec3 = Vec3::new(0.0, 1.5, 0.0);
 // 蓄力
 #[derive(Debug, Resource)]
 pub struct Accumulator(pub Option<Instant>);
+
+#[derive(Debug, Resource)]
+pub struct AccumulationSoundController(pub Option<Handle<AudioSink>>);
 
 #[derive(Debug, Resource)]
 pub struct PrepareJumpTimer(pub Timer);
@@ -139,8 +143,10 @@ pub fn player_jump(
     mut fall_state: ResMut<FallState>,
     mut score_up_queue: ResMut<ScoreUpQueue>,
     prepare_jump_timer: Res<PrepareJumpTimer>,
+    mut accumulation_sound_controller: ResMut<AccumulationSoundController>,
     time: Res<Time>,
     audio: Res<Audio>,
+    audio_sinks: Res<Assets<AudioSink>>,
     game_sounds: Res<GameSounds>,
     q_player: Query<&Transform, With<Player>>,
     q_current_platform: Query<(Entity, &Transform, &PlatformShape), With<CurrentPlatform>>,
@@ -157,6 +163,8 @@ pub fn player_jump(
     if buttons.just_pressed(MouseButton::Left) && jump_state.completed && fall_state.completed {
         // 开始蓄力
         accumulator.0 = time.last_update();
+        accumulation_sound_controller.0 =
+            Some(audio_sinks.get_handle(audio.play(game_sounds.accumulation.clone())));
     }
     if buttons.just_released(MouseButton::Left) && jump_state.completed && fall_state.completed {
         if q_next_platform.is_empty() {
@@ -258,6 +266,14 @@ pub fn player_jump(
 
         // 结束蓄力
         accumulator.0 = None;
+        match &accumulation_sound_controller.0 {
+            Some(handle) => {
+                if let Some(sink) = audio_sinks.get(handle) {
+                    sink.pause();
+                }
+            }
+            None => {}
+        }
     }
 }
 

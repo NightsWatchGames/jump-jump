@@ -8,7 +8,7 @@
 - [x] 飘分效果
 - [x] 分数统计
 - [x] 游戏UI
-- [ ] 游戏音效
+- [x] 游戏音效
 - [x] WASM支持
 
 在线游玩：[点这里](https://nightswatchgames.github.io/games/jump-jump/)（电脑版Chrome/Firefox/Edge打开）

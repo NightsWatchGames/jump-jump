@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::player::{JumpState, Player, INITIAL_PLAYER_POS};
+use crate::player::{JumpState, INITIAL_PLAYER_POS};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
