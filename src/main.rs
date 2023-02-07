@@ -30,7 +30,10 @@ fn main() {
         .with_system(animate_jump)
         .with_system(animate_fall)
         .with_system(animate_player_accumulation)
-        .with_system(animate_platform_accumulation);
+        .with_system(animate_platform_accumulation)
+        .with_system(spawn_score_up_effect)
+        .with_system(sync_score_up_effect)
+        .with_system(shift_score_up_effect);
 
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -45,13 +48,14 @@ fn main() {
         .insert_resource(JumpState::default())
         .insert_resource(FallState::default())
         .insert_resource(GenerateAccumulationParticleEffectTimer(Timer::new(
-            Duration::from_millis(500),
+            Duration::from_millis(300),
             TimerMode::Once,
         )))
         .insert_resource(PrepareJumpTimer(Timer::new(
             Duration::from_millis(200),
             TimerMode::Once,
         )))
+        .insert_resource(ScoreUpQueue(Vec::new()))
         .add_startup_system(setup_camera)
         .add_startup_system(setup_ground)
         .add_startup_system(setup_ui_images)

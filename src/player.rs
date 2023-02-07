@@ -4,7 +4,7 @@ use bevy_hanabi::prelude::*;
 use std::f32::consts::{FRAC_PI_2, PI, TAU};
 
 use crate::platform::PlatformShape;
-use crate::ui::GameState;
+use crate::ui::{GameState, ScoreUpEvent, ScoreUpQueue};
 use crate::{
     platform::{CurrentPlatform, NextPlatform},
     ui::Score,
@@ -128,6 +128,7 @@ pub fn player_jump(
     mut accumulator: ResMut<Accumulator>,
     mut jump_state: ResMut<JumpState>,
     mut fall_state: ResMut<FallState>,
+    mut score_up_queue: ResMut<ScoreUpQueue>,
     prepare_jump_timer: Res<PrepareJumpTimer>,
     time: Res<Time>,
     q_player: Query<&Transform, With<Player>>,
@@ -190,6 +191,8 @@ pub fn player_jump(
             if next_platform_shape.is_landed_on_platform(next_platform.translation, landing_pos) {
                 // 分数加1
                 score.0 += 1;
+                score_up_queue.0.push(ScoreUpEvent { pos: landing_pos });
+
                 commands
                     .entity(next_platform_entity)
                     .remove::<NextPlatform>();

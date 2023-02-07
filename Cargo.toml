@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.9.1"
-bevy_hanabi = "0.5.2"
+# see https://github.com/djeedai/bevy_hanabi/issues/128
+bevy_hanabi = {git = "https://github.com/djeedai/bevy_hanabi", branch = "main"}
 rand = "0.8.0"

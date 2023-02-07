@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::player::{JumpState, Player, INITIAL_PLAYER_POS};
+
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
     MainMenu,
@@ -24,7 +26,6 @@ pub enum MenuButtonAction {
 
 #[derive(Component)]
 pub struct OnMainMenuScreen;
-
 #[derive(Component)]
 pub struct OnGameOverMenuScreen;
 
@@ -33,6 +34,16 @@ pub struct Score(pub u32);
 
 #[derive(Debug, Component)]
 pub struct Scoreboard;
+
+#[derive(Debug, Resource)]
+pub struct ScoreUpQueue(pub Vec<ScoreUpEvent>);
+#[derive(Debug)]
+pub struct ScoreUpEvent {
+    pub pos: Vec3,
+}
+
+#[derive(Debug, Component)]
+pub struct ScoreUpEffect(pub Vec3);
 
 pub fn setup_ui_images(mut commands: Commands, assert_server: Res<AssetServer>) {
     commands.insert_resource(UiImageHandles {
@@ -208,6 +219,82 @@ pub fn update_scoreboard(score: Res<Score>, mut query: Query<&mut Text, With<Sco
     if score.is_changed() {
         let mut text = query.single_mut();
         text.sections[1].value = score.0.to_string();
+    }
+}
+
+// 当摄像机或飘分效果坐标变化时进行同步
+pub fn sync_score_up_effect(
+    mut q_score_up_effect: Query<(&mut Style, &mut ScoreUpEffect)>,
+    q_camera: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+    windows: Res<Windows>,
+) {
+    let (camera, camera_global_transform) = q_camera.single();
+    for (mut score_up_effect_style, score_up_effect) in &mut q_score_up_effect {
+        let viewport_pos = camera
+            .world_to_viewport(camera_global_transform, score_up_effect.0)
+            .unwrap();
+        score_up_effect_style.position = UiRect {
+            top: Val::Px(windows.primary().height() - viewport_pos.y),
+            left: Val::Px(viewport_pos.x),
+            ..default()
+        };
+    }
+}
+
+// 向上移动飘分效果
+// TODO 边移动边增加透明度
+pub fn shift_score_up_effect(
+    mut commands: Commands,
+    mut q_score_up_effect: Query<(Entity, &mut ScoreUpEffect)>,
+    time: Res<Time>,
+) {
+    for (entity, mut score_up_effect) in &mut q_score_up_effect {
+        score_up_effect.0.y += 1.0 * time.delta_seconds();
+        if score_up_effect.0.y > INITIAL_PLAYER_POS.y + 1.0 {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+// 创建飘分效果
+pub fn spawn_score_up_effect(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut score_up_queue: ResMut<ScoreUpQueue>,
+    jump_state: Res<JumpState>,
+    q_camera: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+    windows: Res<Windows>,
+) {
+    if jump_state.completed {
+        // 启动score up动画
+        for score_up_state in score_up_queue.0.iter_mut() {
+            let (camera, camera_global_transform) = q_camera.single();
+            let viewport_pos = camera
+                .world_to_viewport(camera_global_transform, score_up_state.pos)
+                .unwrap();
+            dbg!(viewport_pos);
+            commands.spawn((
+                TextBundle::from_sections([TextSection::new(
+                    "+1",
+                    TextStyle {
+                        font: asset_server.load("fonts/num.ttf"),
+                        font_size: 40.0,
+                        color: Color::rgb(0.5, 0.5, 1.0),
+                    },
+                )])
+                .with_style(Style {
+                    position_type: PositionType::Absolute,
+                    position: UiRect {
+                        top: Val::Px(windows.primary().height() - viewport_pos.y),
+                        left: Val::Px(viewport_pos.x),
+                        ..default()
+                    },
+                    ..default()
+                }),
+                ScoreUpEffect(score_up_state.pos),
+            ));
+        }
+        score_up_queue.0.clear();
     }
 }
 
