@@ -11,6 +11,8 @@
 - [ ] 游戏音效
 - [x] WASM支持
 
+在线游玩：[点这里](https://nightswatchgames.github.io/games/jump-jump/)（电脑版Chrome/Firefox/Edge打开）
+
 ## 运行
 1. 本地运行
 ```
@@ -36,7 +38,6 @@ wasm-bindgen --out-dir ./out/ --target web ./target/wasm32-unknown-unknown/relea
 ![game over](https://raw.githubusercontent.com/NightsWatchGames/jump-jump/master/screenshots/game_over.png)
 
 ## 参考
-- https://github.com/zhenghongzhi/Unity-JumpJump
 - https://github.com/yaoshanliang/weapp-jump
 - https://github.com/wswei99/tiaoyitiao
 - https://github.com/potato47/jump
