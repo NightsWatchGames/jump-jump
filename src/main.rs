@@ -34,12 +34,11 @@ fn main() {
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        game_playing_set_on_update = game_playing_set_on_update.with_system(animate_accumulation_particle_effect);
+        game_playing_set_on_update =
+            game_playing_set_on_update.with_system(animate_accumulation_particle_effect);
     }
 
-    app
-        // .add_plugins(DefaultPlugins)
-        .add_state(GameState::MainMenu)
+    app.add_state(GameState::MainMenu)
         .insert_resource(CameraMoveState::default())
         .insert_resource(Score(0))
         .insert_resource(Accumulator(None))
@@ -79,9 +78,7 @@ fn main() {
                 .with_system(reset_score)
                 .with_system(reset_prepare_jump_timer),
         )
-        .add_system_set(
-            game_playing_set_on_update
-        )
+        .add_system_set(game_playing_set_on_update)
         // GameOver
         .add_system_set(SystemSet::on_enter(GameState::GameOver).with_system(setup_game_over_menu))
         .add_system_set(SystemSet::on_update(GameState::GameOver).with_system(click_button))

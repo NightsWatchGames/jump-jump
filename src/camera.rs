@@ -1,7 +1,4 @@
-use bevy::{
-    core_pipeline::{bloom::BloomSettings},
-    prelude::*,
-};
+use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
 
 use crate::player::{FallState, JumpState, Player, INITIAL_PLAYER_POS};
 
@@ -35,19 +32,27 @@ pub fn setup_camera(mut commands: Commands) {
         ..default()
     });
 
+    // see issue https://github.com/bevyengine/bevy/issues/7352
+    let hdr = if cfg!(target_arch = "wasm32") {
+        false
+    } else {
+        true
+    };
+
     // camera
-    commands.spawn((
-        Camera3dBundle {
-            transform: Transform::from_translation(INITIAL_CAMERA_POS)
-                .looking_at(Vec3::ZERO, Vec3::Y),
-            camera: Camera {
-                hdr: true,
-                ..default()
-            },
+    let mut camera_command = commands.spawn((Camera3dBundle {
+        transform: Transform::from_translation(INITIAL_CAMERA_POS).looking_at(Vec3::ZERO, Vec3::Y),
+        camera: Camera {
+            hdr: hdr,
             ..default()
         },
-        BloomSettings::default(),
-    ));
+        ..default()
+    },));
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        camera_command.insert(BloomSettings::default());
+    }
 }
 
 pub fn setup_ground(
