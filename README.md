@@ -33,7 +33,7 @@ wasm-bindgen --out-dir ./out/ --target web ./target/wasm32-unknown-unknown/relea
 ```
 
 ## 游戏展示
-视频演示：[B站]()
+视频演示：[B站](https://www.bilibili.com/video/BV1B24y1q7aW)
 
 ![main menu](https://raw.githubusercontent.com/NightsWatchGames/jump-jump/master/screenshots/main_menu.png)
 ![game playing](https://raw.githubusercontent.com/NightsWatchGames/jump-jump/master/screenshots/game_playing.png)

@@ -165,7 +165,7 @@ pub fn player_jump(
         accumulation_sound_controller.0 =
             Some(audio_sinks.get_handle(audio.play(game_sounds.accumulation.clone())));
     }
-    if buttons.just_released(MouseButton::Left) && jump_state.completed && fall_state.completed {
+    if buttons.just_released(MouseButton::Left) && jump_state.completed && fall_state.completed && accumulator.0.is_some() {
         if q_next_platform.is_empty() {
             warn!("There is no next platform");
             return;
@@ -336,9 +336,9 @@ pub fn animate_player_accumulation(
     let mut player = q_player.single_mut();
     match accumulator.0 {
         Some(_) => {
-            player.scale.x = (player.scale.x + 0.0006 * time.elapsed_seconds()).min(1.3);
-            player.scale.y = (player.scale.y - 0.0008 * time.elapsed_seconds()).max(0.6);
-            player.scale.z = (player.scale.z + 0.0006 * time.elapsed_seconds()).min(1.3);
+            player.scale.x = (player.scale.x + 0.12 * time.delta_seconds()).min(1.3);
+            player.scale.y = (player.scale.y - 0.15 * time.delta_seconds()).max(0.6);
+            player.scale.z = (player.scale.z + 0.12 * time.delta_seconds()).min(1.3);
         }
         None => {
             player.scale = Vec3::ONE;

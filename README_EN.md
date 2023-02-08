@@ -31,7 +31,7 @@ wasm-bindgen --out-dir ./out/ --target web ./target/wasm32-unknown-unknown/relea
 ```
 
 ## Screenshots
-Game video: [Youtube]()
+Game video: [Youtube](https://www.youtube.com/watch?v=CskIsc8SCdo)
 
 ![main menu](https://raw.githubusercontent.com/NightsWatchGames/jump-jump/master/screenshots/main_menu.png)
 ![game playing](https://raw.githubusercontent.com/NightsWatchGames/jump-jump/master/screenshots/game_playing.png)

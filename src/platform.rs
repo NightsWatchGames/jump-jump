@@ -129,7 +129,7 @@ pub fn animate_platform_accumulation(
     match accumulator.0 {
         Some(_) => {
             current_platform.scale.y =
-                (current_platform.scale.y - 0.0008 * time.elapsed_seconds()).max(0.6);
+                (current_platform.scale.y - 0.15 * time.delta_seconds()).max(0.6);
         }
         None => {
             // TODO 回弹效果
