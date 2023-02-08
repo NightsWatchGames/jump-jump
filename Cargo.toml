@@ -3,15 +3,13 @@ name = "jump-jump"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-# see https://github.com/djeedai/bevy_hanabi/issues/128
-bevy_hanabi = {git = "https://github.com/djeedai/bevy_hanabi", branch = "main"}
+bevy_hanabi = "0.5.3"
 rand = "0.8.0"
 
 [dependencies.bevy]
 version = "0.9.1"
 features = [
+    # TODO 换成symphonia-mp3 https://github.com/bevyengine/bevy/issues/7552
     "mp3"
 ]

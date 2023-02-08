@@ -116,7 +116,6 @@ pub fn setup_player(
 ) {
     commands.spawn((
         PbrBundle {
-            // TODO 换成圆柱体
             mesh: meshes.add(Mesh::from(shape::Capsule {
                 radius: 0.2,
                 rings: 0,
@@ -211,7 +210,7 @@ pub fn player_jump(
             if next_platform_shape.is_landed_on_platform(next_platform.translation, landing_pos) {
                 // 分数加1
                 score.0 += 1;
-                score_up_queue.0.push(ScoreUpEvent { pos: landing_pos });
+                score_up_queue.0.push(ScoreUpEvent { pos: Vec3::new(landing_pos.x, landing_pos.y + 0.5, landing_pos.z) });
 
                 commands
                     .entity(next_platform_entity)

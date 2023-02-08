@@ -267,7 +267,7 @@ pub fn shift_score_up_effect(
 ) {
     for (entity, mut score_up_effect) in &mut q_score_up_effect {
         score_up_effect.0.y += 1.0 * time.delta_seconds();
-        if score_up_effect.0.y > INITIAL_PLAYER_POS.y + 1.0 {
+        if score_up_effect.0.y > INITIAL_PLAYER_POS.y + 1.2 {
             commands.entity(entity).despawn();
         }
     }
