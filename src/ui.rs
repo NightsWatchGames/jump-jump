@@ -261,14 +261,17 @@ pub fn sync_score_up_effect(
 }
 
 // 向上移动飘分效果
-// TODO 边移动边增加透明度
 pub fn shift_score_up_effect(
     mut commands: Commands,
-    mut q_score_up_effect: Query<(Entity, &mut ScoreUpEffect)>,
+    mut q_score_up_effect: Query<(Entity, &mut Text, &mut ScoreUpEffect)>,
     time: Res<Time>,
 ) {
-    for (entity, mut score_up_effect) in &mut q_score_up_effect {
+    for (entity, mut text, mut score_up_effect) in &mut q_score_up_effect {
         score_up_effect.0.y += 1.0 * time.delta_seconds();
+        // 边移动边增加透明度
+        for section in text.sections.iter_mut() {
+            section.style.color.set_a(section.style.color.a() * 0.9);
+        }
         if score_up_effect.0.y > INITIAL_PLAYER_POS.y + 1.2 {
             commands.entity(entity).despawn();
         }
