@@ -1,7 +1,7 @@
 use bevy::audio::AudioSink;
-use bevy::prelude::{shape::CapsuleUvProfile, *};
+use bevy::prelude::*;
 use bevy::utils::Instant;
-use bevy_hanabi::prelude::*;
+// use bevy_hanabi::prelude::*;
 use std::f32::consts::{FRAC_PI_2, PI, TAU};
 
 use crate::platform::PlatformShape;
@@ -17,8 +17,8 @@ pub const INITIAL_PLAYER_POS: Vec3 = Vec3::new(0.0, 1.5, 0.0);
 #[derive(Debug, Resource)]
 pub struct Accumulator(pub Option<Instant>);
 
-#[derive(Debug, Resource)]
-pub struct AccumulationSoundController(pub Option<Handle<AudioSink>>);
+#[derive(Debug, Component)]
+pub struct AccumulationSound;
 
 #[derive(Debug, Resource)]
 pub struct PrepareJumpTimer(pub Timer);
@@ -111,42 +111,35 @@ pub fn setup_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    audio: Res<Audio>,
     game_sounds: Res<GameSounds>,
 ) {
     commands.spawn((
         PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Capsule {
-                radius: 0.2,
-                rings: 0,
-                depth: 0.5,
-                latitudes: 16,
-                longitudes: 32,
-                uv_profile: CapsuleUvProfile::Aspect,
-            })),
-            material: materials.add(Color::PINK.into()),
+            mesh: meshes.add(Capsule3d::new(0.2, 0.5).mesh()),
+            material: materials.add(Color::PINK),
             transform: Transform::from_translation(INITIAL_PLAYER_POS),
             ..default()
         },
         Player,
     ));
-    audio.play(game_sounds.start.clone());
+    commands.spawn(AudioBundle {
+        source: game_sounds.start.clone(),
+        settings: PlaybackSettings::DESPAWN,
+    });
 }
 
 pub fn player_jump(
     mut commands: Commands,
-    buttons: Res<Input<MouseButton>>,
+    buttons: Res<ButtonInput<MouseButton>>,
     mut score: ResMut<Score>,
     mut accumulator: ResMut<Accumulator>,
     mut jump_state: ResMut<JumpState>,
     mut fall_state: ResMut<FallState>,
     mut score_up_queue: ResMut<ScoreUpQueue>,
     prepare_jump_timer: Res<PrepareJumpTimer>,
-    mut accumulation_sound_controller: ResMut<AccumulationSoundController>,
-    time: Res<Time>,
-    audio: Res<Audio>,
-    audio_sinks: Res<Assets<AudioSink>>,
+    time: Res<Time<Real>>,
     game_sounds: Res<GameSounds>,
+    q_accumulation_sound: Query<&AudioSink, With<AccumulationSound>>,
     q_player: Query<&Transform, With<Player>>,
     q_current_platform: Query<(Entity, &Transform, &PlatformShape), With<CurrentPlatform>>,
     q_next_platform: Query<
@@ -162,10 +155,19 @@ pub fn player_jump(
     if buttons.just_pressed(MouseButton::Left) && jump_state.completed && fall_state.completed {
         // 开始蓄力
         accumulator.0 = time.last_update();
-        accumulation_sound_controller.0 =
-            Some(audio_sinks.get_handle(audio.play(game_sounds.accumulation.clone())));
+        commands.spawn((
+            AccumulationSound,
+            AudioBundle {
+                source: game_sounds.accumulation.clone(),
+                settings: PlaybackSettings::LOOP,
+            },
+        ));
     }
-    if buttons.just_released(MouseButton::Left) && jump_state.completed && fall_state.completed && accumulator.0.is_some() {
+    if buttons.just_released(MouseButton::Left)
+        && jump_state.completed
+        && fall_state.completed
+        && accumulator.0.is_some()
+    {
         if q_next_platform.is_empty() {
             warn!("There is no next platform");
             return;
@@ -210,7 +212,9 @@ pub fn player_jump(
             if next_platform_shape.is_landed_on_platform(next_platform.translation, landing_pos) {
                 // 分数加1
                 score.0 += 1;
-                score_up_queue.0.push(ScoreUpEvent { pos: Vec3::new(landing_pos.x, landing_pos.y + 0.5, landing_pos.z) });
+                score_up_queue.0.push(ScoreUpEvent {
+                    pos: Vec3::new(landing_pos.x, landing_pos.y + 0.5, landing_pos.z),
+                });
 
                 commands
                     .entity(next_platform_entity)
@@ -265,22 +269,17 @@ pub fn player_jump(
 
         // 结束蓄力
         accumulator.0 = None;
-        match &accumulation_sound_controller.0 {
-            Some(handle) => {
-                if let Some(sink) = audio_sinks.get(handle) {
-                    sink.pause();
-                }
-            }
-            None => {}
+        for sink in q_accumulation_sound.iter() {
+            sink.pause();
         }
     }
 }
 
 pub fn animate_jump(
+    mut commands: Commands,
     mut jump_state: ResMut<JumpState>,
     time: Res<Time>,
     mut q_player: Query<&mut Transform, With<Player>>,
-    audio: Res<Audio>,
     game_sounds: Res<GameSounds>,
 ) {
     if !jump_state.completed {
@@ -312,7 +311,10 @@ pub fn animate_jump(
             // 结束跳跃
             jump_state.completed = true;
             if !jump_state.falled {
-                audio.play(game_sounds.success.clone());
+                commands.spawn(AudioBundle {
+                    source: game_sounds.success.clone(),
+                    settings: PlaybackSettings::DESPAWN,
+                });
             }
         } else {
             player.translate_around(around_point, quat);
@@ -347,17 +349,20 @@ pub fn animate_player_accumulation(
 }
 
 pub fn animate_fall(
+    mut commands: Commands,
     mut fall_state: ResMut<FallState>,
     jump_state: Res<JumpState>,
     time: Res<Time>,
-    mut game_state: ResMut<State<GameState>>,
+    mut next_game_state: ResMut<NextState<GameState>>,
     mut q_player: Query<&mut Transform, With<Player>>,
-    audio: Res<Audio>,
     game_sounds: Res<GameSounds>,
 ) {
     if !fall_state.completed && jump_state.completed {
         if !fall_state.played_sound {
-            audio.play(game_sounds.fall.clone());
+            commands.spawn(AudioBundle {
+                source: game_sounds.fall.clone(),
+                settings: PlaybackSettings::DESPAWN,
+            });
             fall_state.played_sound = true;
         }
         let mut player = q_player.single_mut();
@@ -367,7 +372,7 @@ pub fn animate_fall(
                     // 已摔落在地
                     fall_state.completed = true;
                     info!("Game over!");
-                    game_state.set(GameState::GameOver).unwrap();
+                    next_game_state.set(GameState::GameOver);
                 } else {
                     player.translation.y -= 0.7 * time.delta_seconds();
                 }
@@ -395,7 +400,7 @@ pub fn animate_fall(
                         // 已摔落在地
                         fall_state.completed = true;
                         info!("Game over!");
-                        game_state.set(GameState::GameOver).unwrap();
+                        next_game_state.set(GameState::GameOver);
                     } else {
                         player.translation.y -= 0.7 * time.delta_seconds();
                     }
@@ -405,79 +410,79 @@ pub fn animate_fall(
     }
 }
 
-pub fn animate_accumulation_particle_effect(
-    mut commands: Commands,
-    mut effects: ResMut<Assets<EffectAsset>>,
-    accumulator: Res<Accumulator>,
-    mut effect_timer: ResMut<GenerateAccumulationParticleEffectTimer>,
-    time: Res<Time>,
-    mut q_effect: Query<(Entity, &mut ParticleEffect, &mut Transform)>,
-    q_player: Query<&Transform, (With<Player>, Without<ParticleEffect>)>,
-) {
-    if accumulator.0.is_some() {
-        // 生成粒子特效
-        effect_timer.0.tick(time.delta());
-        if effect_timer.0.just_finished() {
-            let player = q_player.single();
-            let mut color_gradient = Gradient::new();
-            color_gradient.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
-            color_gradient.add_key(0.1, Vec4::new(4.0, 4.0, 0.0, 1.0));
-            color_gradient.add_key(0.9, Vec4::new(4.0, 0.0, 0.0, 1.0));
-            color_gradient.add_key(1.0, Vec4::new(4.0, 0.0, 0.0, 0.0));
-
-            let mut size_gradient = Gradient::new();
-            size_gradient.add_key(0.0, Vec2::splat(0.05));
-            size_gradient.add_key(0.3, Vec2::splat(0.05));
-            size_gradient.add_key(1.0, Vec2::splat(0.0));
-
-            let name = format!("accumulation{}", time.elapsed_seconds() as u32);
-            let effect = effects.add(
-                EffectAsset {
-                    name: name.clone(),
-                    capacity: 3,
-                    spawner: Spawner::once(3.0.into(), true),
-                    ..Default::default()
-                }
-                .init(PositionSphereModifier {
-                    dimension: ShapeDimension::Volume,
-                    radius: 1.0,
-                    center: player.translation,
-                    ..default()
-                })
-                .init(ParticleLifetimeModifier { lifetime: 2. })
-                .update(LinearDragModifier { drag: 8. })
-                .update(ForceFieldModifier::new(vec![ForceFieldSource {
-                    position: player.translation,
-                    max_radius: 10.0,
-                    min_radius: 0.0,
-                    mass: 6.0,
-                    force_exponent: 0.3,
-                    conform_to_sphere: false,
-                }]))
-                .render(ColorOverLifetimeModifier {
-                    gradient: color_gradient.clone(),
-                })
-                .render(SizeOverLifetimeModifier {
-                    gradient: size_gradient.clone(),
-                }),
-            );
-            commands.spawn((
-                Name::new(name),
-                ParticleEffectBundle {
-                    effect: ParticleEffect::new(effect),
-                    transform: Transform::IDENTITY,
-                    ..Default::default()
-                },
-            ));
-            effect_timer.0.reset();
-        }
-    } else {
-        // 关闭粒子特效
-        for (entity, _, _) in &mut q_effect {
-            commands.entity(entity).despawn();
-        }
-    }
-}
+// pub fn animate_accumulation_particle_effect(
+//     mut commands: Commands,
+//     mut effects: ResMut<Assets<EffectAsset>>,
+//     accumulator: Res<Accumulator>,
+//     mut effect_timer: ResMut<GenerateAccumulationParticleEffectTimer>,
+//     time: Res<Time>,
+//     mut q_effect: Query<(Entity, &mut ParticleEffect, &mut Transform)>,
+//     q_player: Query<&Transform, (With<Player>, Without<ParticleEffect>)>,
+// ) {
+//     if accumulator.0.is_some() {
+//         // 生成粒子特效
+//         effect_timer.0.tick(time.delta());
+//         if effect_timer.0.just_finished() {
+//             let player = q_player.single();
+//             let mut color_gradient = Gradient::new();
+//             color_gradient.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
+//             color_gradient.add_key(0.1, Vec4::new(4.0, 4.0, 0.0, 1.0));
+//             color_gradient.add_key(0.9, Vec4::new(4.0, 0.0, 0.0, 1.0));
+//             color_gradient.add_key(1.0, Vec4::new(4.0, 0.0, 0.0, 0.0));
+//
+//             let mut size_gradient = Gradient::new();
+//             size_gradient.add_key(0.0, Vec2::splat(0.05));
+//             size_gradient.add_key(0.3, Vec2::splat(0.05));
+//             size_gradient.add_key(1.0, Vec2::splat(0.0));
+//
+//             let name = format!("accumulation{}", time.elapsed_seconds() as u32);
+//             let effect = effects.add(
+//                 EffectAsset {
+//                     name: name.clone(),
+//                     capacity: 3,
+//                     spawner: Spawner::once(3.0.into(), true),
+//                     ..Default::default()
+//                 }
+//                 .init(PositionSphereModifier {
+//                     dimension: ShapeDimension::Volume,
+//                     radius: 1.0,
+//                     center: player.translation,
+//                     ..default()
+//                 })
+//                 .init(ParticleLifetimeModifier { lifetime: 2. })
+//                 .update(LinearDragModifier { drag: 8. })
+//                 .update(ForceFieldModifier::new(vec![ForceFieldSource {
+//                     position: player.translation,
+//                     max_radius: 10.0,
+//                     min_radius: 0.0,
+//                     mass: 6.0,
+//                     force_exponent: 0.3,
+//                     conform_to_sphere: false,
+//                 }]))
+//                 .render(ColorOverLifetimeModifier {
+//                     gradient: color_gradient.clone(),
+//                 })
+//                 .render(SizeOverLifetimeModifier {
+//                     gradient: size_gradient.clone(),
+//                 }),
+//             );
+//             commands.spawn((
+//                 Name::new(name),
+//                 ParticleEffectBundle {
+//                     effect: ParticleEffect::new(effect),
+//                     transform: Transform::IDENTITY,
+//                     ..Default::default()
+//                 },
+//             ));
+//             effect_timer.0.reset();
+//         }
+//     } else {
+//         // 关闭粒子特效
+//         for (entity, _, _) in &mut q_effect {
+//             commands.entity(entity).despawn();
+//         }
+//     }
+// }
 
 pub fn clear_player(mut commands: Commands, q_player: Query<Entity, With<Player>>) {
     for player in &q_player {

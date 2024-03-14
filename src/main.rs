@@ -5,7 +5,7 @@ use crate::platform::*;
 use crate::player::*;
 use crate::ui::*;
 use bevy::prelude::*;
-use bevy_hanabi::prelude::*;
+// use bevy_hanabi::prelude::*;
 
 mod camera;
 mod platform;
@@ -16,32 +16,18 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins);
 
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        app.add_plugin(HanabiPlugin);
-    }
+    // #[cfg(not(target_arch = "wasm32"))]
+    // {
+    //     app.add_plugin(HanabiPlugin);
+    // }
 
-    let mut game_playing_set_on_update = SystemSet::on_update(GameState::Playing)
-        .with_system(prepare_jump)
-        .with_system(generate_next_platform)
-        .with_system(move_camera)
-        .with_system(player_jump)
-        .with_system(update_scoreboard)
-        .with_system(animate_jump)
-        .with_system(animate_fall)
-        .with_system(animate_player_accumulation)
-        .with_system(animate_platform_accumulation.after(player_jump))
-        .with_system(spawn_score_up_effect)
-        .with_system(sync_score_up_effect)
-        .with_system(shift_score_up_effect);
+    // #[cfg(not(target_arch = "wasm32"))]
+    // {
+    //     game_playing_set_on_update =
+    //         game_playing_set_on_update.with_system(animate_accumulation_particle_effect);
+    // }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        game_playing_set_on_update =
-            game_playing_set_on_update.with_system(animate_accumulation_particle_effect);
-    }
-
-    app.add_state(GameState::MainMenu)
+    app.init_state::<GameState>()
         .insert_resource(CameraMoveState::default())
         .insert_resource(Score(0))
         .insert_resource(Accumulator(None))
@@ -56,42 +42,74 @@ fn main() {
             TimerMode::Once,
         )))
         .insert_resource(ScoreUpQueue(Vec::new()))
-        .insert_resource(AccumulationSoundController(None))
-        .add_startup_system(setup_camera)
-        .add_startup_system(setup_ground)
-        .add_startup_system(setup_ui_images)
-        .add_startup_system(setup_game_sounds)
-        // Main Menu
-        .add_system_set(
-            SystemSet::on_enter(GameState::MainMenu)
-                .with_system(setup_main_menu)
-                .with_system(clear_player)
-                .with_system(clear_platforms)
-                .with_system(despawn_scoreboard),
+        .add_systems(
+            Startup,
+            (
+                setup_camera,
+                setup_ground,
+                setup_ui_images,
+                setup_game_sounds,
+            ),
         )
-        .add_system_set(SystemSet::on_update(GameState::MainMenu).with_system(click_button))
-        .add_system_set(
-            SystemSet::on_exit(GameState::MainMenu).with_system(despawn_screen::<OnMainMenuScreen>),
+        // Main Menu
+        .add_systems(
+            OnEnter(GameState::MainMenu),
+            (
+                setup_main_menu,
+                clear_player,
+                clear_platforms,
+                despawn_scoreboard,
+            ),
+        )
+        .add_systems(
+            Update,
+            (click_button,).run_if(in_state(GameState::MainMenu)),
+        )
+        .add_systems(
+            OnExit(GameState::MainMenu),
+            (despawn_screen::<OnMainMenuScreen>,),
         )
         // Playing
-        .add_system_set(
-            SystemSet::on_enter(GameState::Playing)
-                .with_system(clear_player)
-                .with_system(clear_platforms)
-                .with_system(despawn_scoreboard)
-                .with_system(setup_first_platform.after(clear_platforms))
-                .with_system(setup_player.after(clear_player))
-                .with_system(setup_scoreboard.after(despawn_scoreboard))
-                .with_system(reset_score)
-                .with_system(reset_prepare_jump_timer),
+        .add_systems(
+            OnEnter(GameState::Playing),
+            (
+                clear_player,
+                clear_platforms,
+                despawn_scoreboard,
+                setup_first_platform.after(clear_platforms),
+                setup_player.after(clear_player),
+                setup_scoreboard.after(despawn_scoreboard),
+                reset_score,
+                reset_prepare_jump_timer,
+            ),
         )
-        .add_system_set(game_playing_set_on_update)
+        .add_systems(
+            Update,
+            (
+                prepare_jump,
+                generate_next_platform,
+                move_camera,
+                player_jump,
+                update_scoreboard,
+                animate_jump,
+                animate_fall,
+                animate_player_accumulation,
+                animate_platform_accumulation.after(player_jump),
+                spawn_score_up_effect,
+                sync_score_up_effect,
+                shift_score_up_effect,
+            )
+                .run_if(in_state(GameState::Playing)),
+        )
         // GameOver
-        .add_system_set(SystemSet::on_enter(GameState::GameOver).with_system(setup_game_over_menu))
-        .add_system_set(SystemSet::on_update(GameState::GameOver).with_system(click_button))
-        .add_system_set(
-            SystemSet::on_exit(GameState::GameOver)
-                .with_system(despawn_screen::<OnGameOverMenuScreen>),
+        .add_systems(OnEnter(GameState::GameOver), (setup_game_over_menu,))
+        .add_systems(
+            Update,
+            (click_button,).run_if(in_state(GameState::GameOver)),
+        )
+        .add_systems(
+            OnExit(GameState::GameOver),
+            (despawn_screen::<OnGameOverMenuScreen>,),
         )
         .run();
 }

@@ -1,9 +1,11 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 use crate::player::{JumpState, INITIAL_PLAYER_POS};
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default, States)]
 pub enum GameState {
+    #[default]
     MainMenu,
     Playing,
     GameOver,
@@ -76,7 +78,8 @@ pub fn setup_main_menu(mut commands: Commands, ui_images: Res<UiImageHandles>) {
         .spawn((
             NodeBundle {
                 style: Style {
-                    size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                    width: Val::Percent(100.),
+                    height: Val::Percent(100.),
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Center,
                     ..default()
@@ -106,7 +109,8 @@ pub fn setup_main_menu(mut commands: Commands, ui_images: Res<UiImageHandles>) {
                     parent.spawn((
                         ButtonBundle {
                             style: Style {
-                                size: Size::new(Val::Px(150.), Val::Px(60.)),
+                                width: Val::Px(150.),
+                                height: Val::Px(60.),
                                 margin: UiRect::all(Val::Px(10.0)),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
@@ -126,7 +130,8 @@ pub fn setup_game_over_menu(mut commands: Commands, ui_images: Res<UiImageHandle
         .spawn((
             NodeBundle {
                 style: Style {
-                    size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                    width: Val::Percent(100.),
+                    height: Val::Percent(100.),
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Center,
                     ..default()
@@ -166,7 +171,8 @@ pub fn setup_game_over_menu(mut commands: Commands, ui_images: Res<UiImageHandle
                             parent.spawn((
                                 ButtonBundle {
                                     style: Style {
-                                        size: Size::new(Val::Px(40.), Val::Px(40.)),
+                                        width: Val::Px(40.),
+                                        height: Val::Px(40.),
                                         margin: UiRect::all(Val::Px(10.0)),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
@@ -182,7 +188,8 @@ pub fn setup_game_over_menu(mut commands: Commands, ui_images: Res<UiImageHandle
                             parent.spawn((
                                 ButtonBundle {
                                     style: Style {
-                                        size: Size::new(Val::Px(150.), Val::Px(60.)),
+                                        width: Val::Px(150.),
+                                        height: Val::Px(60.),
                                         margin: UiRect::all(Val::Px(10.0)),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
@@ -221,11 +228,8 @@ pub fn setup_scoreboard(mut commands: Commands, asset_server: Res<AssetServer>) 
             ])
             .with_style(Style {
                 position_type: PositionType::Absolute,
-                position: UiRect {
-                    top: Val::Px(30.0),
-                    left: Val::Px(30.0),
-                    ..default()
-                },
+                top: Val::Px(30.0),
+                left: Val::Px(30.0),
                 ..default()
             }),
         )
@@ -243,18 +247,16 @@ pub fn update_scoreboard(score: Res<Score>, mut query: Query<&mut Text, With<Sco
 pub fn sync_score_up_effect(
     mut q_score_up_effect: Query<(&mut Style, &mut ScoreUpEffect)>,
     q_camera: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    windows: Res<Windows>,
+    q_windows: Query<&Window, With<PrimaryWindow>>,
 ) {
     let (camera, camera_global_transform) = q_camera.single();
+    let window = q_windows.single();
     for (mut score_up_effect_style, score_up_effect) in &mut q_score_up_effect {
         let viewport_pos = camera
             .world_to_viewport(camera_global_transform, score_up_effect.0)
             .unwrap();
-        score_up_effect_style.position = UiRect {
-            top: Val::Px(windows.primary().height() - viewport_pos.y),
-            left: Val::Px(viewport_pos.x),
-            ..default()
-        };
+        score_up_effect_style.top = Val::Px(window.resolution.height() - viewport_pos.y);
+        score_up_effect_style.left = Val::Px(viewport_pos.x);
     }
 }
 
@@ -280,9 +282,10 @@ pub fn spawn_score_up_effect(
     mut score_up_queue: ResMut<ScoreUpQueue>,
     jump_state: Res<JumpState>,
     q_camera: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    windows: Res<Windows>,
+    q_windows: Query<&Window, With<PrimaryWindow>>,
 ) {
     if jump_state.completed {
+        let window = q_windows.single();
         // 启动score up动画
         for score_up_state in score_up_queue.0.iter_mut() {
             let (camera, camera_global_transform) = q_camera.single();
@@ -301,11 +304,8 @@ pub fn spawn_score_up_effect(
                 )])
                 .with_style(Style {
                     position_type: PositionType::Absolute,
-                    position: UiRect {
-                        top: Val::Px(windows.primary().height() - viewport_pos.y),
-                        left: Val::Px(viewport_pos.x),
-                        ..default()
-                    },
+                    top: Val::Px(window.resolution.height() - viewport_pos.y),
+                    left: Val::Px(viewport_pos.x),
                     ..default()
                 }),
                 ScoreUpEffect(score_up_state.pos),
@@ -320,22 +320,22 @@ pub fn click_button(
         (&Interaction, &MenuButtonAction),
         (Changed<Interaction>, With<Button>),
     >,
-    mut game_state: ResMut<State<GameState>>,
+    mut next_game_state: ResMut<NextState<GameState>>,
 ) {
     for (interaction, menu_button_action) in &mut interaction_query {
         match *interaction {
-            Interaction::Clicked => match menu_button_action {
+            Interaction::Pressed => match menu_button_action {
                 MenuButtonAction::StartGame => {
                     info!("StartGame button clicked");
-                    game_state.set(GameState::Playing).unwrap();
+                    next_game_state.set(GameState::Playing);
                 }
                 MenuButtonAction::RestartGame => {
                     info!("RestartGame button clicked");
-                    game_state.set(GameState::Playing).unwrap();
+                    next_game_state.set(GameState::Playing);
                 }
                 MenuButtonAction::BackToMainMenu => {
                     info!("BackToMainMenu button clicked");
-                    game_state.set(GameState::MainMenu).unwrap();
+                    next_game_state.set(GameState::MainMenu);
                 }
             },
             _ => {}

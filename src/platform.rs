@@ -20,10 +20,8 @@ pub enum PlatformShape {
 impl PlatformShape {
     pub fn mesh(&self) -> Mesh {
         match self {
-            Self::Box => Mesh::from(shape::Box::new(1.5, 1.0, 1.5)),
-            Self::Cylinder => {
-                unimplemented!("Waiting bevy 0.10 release")
-            }
+            Self::Box => Mesh::from(Cuboid::new(1.5, 1.0, 1.5)),
+            Self::Cylinder => Mesh::from(Cylinder::new(0.75, 1.0)),
         }
     }
     // 是否落到平台上
@@ -36,7 +34,8 @@ impl PlatformShape {
                     && (landing_pos.z - platform_pos.z).abs() < 1.5 / 2.0
             }
             Self::Cylinder => {
-                unimplemented!("Waiting bevy 0.10 release")
+                (landing_pos.x - platform_pos.x).abs() < 0.75
+                    && (landing_pos.z - platform_pos.z).abs() < 0.75
             }
         }
     }
@@ -53,7 +52,8 @@ impl PlatformShape {
                     && (landing_pos.z - platform_pos.z).abs() < (1.5 / 2.0 + player_radius)
             }
             Self::Cylinder => {
-                unimplemented!("Waiting bevy 0.10 release")
+                (landing_pos.x - platform_pos.x).abs() < (0.75 + player_radius)
+                    && (landing_pos.z - platform_pos.z).abs() < (0.75 + player_radius)
             }
         }
     }
@@ -68,7 +68,7 @@ pub fn setup_first_platform(
     commands.spawn((
         PbrBundle {
             mesh: meshes.add(platform_shape.mesh()),
-            material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+            material: materials.add(Color::rgb(0.8, 0.7, 0.6)),
             transform: Transform::from_xyz(0.0, 0.5, 0.0),
             ..default()
         },
@@ -78,7 +78,6 @@ pub fn setup_first_platform(
 }
 
 // 生成下一个平台
-// TODO 圆柱形平台
 pub fn generate_next_platform(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -108,7 +107,7 @@ pub fn generate_next_platform(
             commands.spawn((
                 PbrBundle {
                     mesh: meshes.add(platform_shape.mesh()),
-                    material: materials.add(rand_platform_color().into()),
+                    material: materials.add(rand_platform_color()),
                     transform: Transform::from_translation(next_pos),
                     ..default()
                 },
@@ -150,5 +149,11 @@ fn rand_platform_color() -> Color {
 }
 
 fn rand_platform_shape() -> PlatformShape {
-    PlatformShape::Box
+    let mut rng = rand::thread_rng();
+    let selection = rng.gen_range(0..2);
+    match selection {
+        0 => PlatformShape::Box,
+        1 => PlatformShape::Cylinder,
+        _ => PlatformShape::Box,
+    }
 }
