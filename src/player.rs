@@ -423,7 +423,6 @@ pub fn animate_accumulation_particle_effect(
         // 生成粒子特效
         effect_timer.0.tick(time.delta());
         if effect_timer.0.just_finished() {
-            println!("LWZTEST spawn effect");
             let player = q_player.single();
             let mut color_gradient = Gradient::new();
             color_gradient.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
