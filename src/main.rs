@@ -5,7 +5,7 @@ use crate::platform::*;
 use crate::player::*;
 use crate::ui::*;
 use bevy::prelude::*;
-// use bevy_hanabi::prelude::*;
+use bevy_hanabi::prelude::*;
 
 mod camera;
 mod platform;
@@ -16,16 +16,10 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins);
 
-    // #[cfg(not(target_arch = "wasm32"))]
-    // {
-    //     app.add_plugin(HanabiPlugin);
-    // }
-
-    // #[cfg(not(target_arch = "wasm32"))]
-    // {
-    //     game_playing_set_on_update =
-    //         game_playing_set_on_update.with_system(animate_accumulation_particle_effect);
-    // }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        app.add_plugins(HanabiPlugin);
+    }
 
     app.init_state::<GameState>()
         .insert_resource(CameraMoveState::default())
@@ -110,6 +104,12 @@ fn main() {
         .add_systems(
             OnExit(GameState::GameOver),
             (despawn_screen::<OnGameOverMenuScreen>,),
-        )
-        .run();
+        );
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        app.add_systems(Update, animate_accumulation_particle_effect);
+    }
+
+    app.run();
 }
