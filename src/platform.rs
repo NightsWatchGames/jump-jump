@@ -68,7 +68,7 @@ pub fn setup_first_platform(
     commands.spawn((
         PbrBundle {
             mesh: meshes.add(platform_shape.mesh()),
-            material: materials.add(Color::rgb(0.8, 0.7, 0.6)),
+            material: materials.add(Color::srgb(0.8, 0.7, 0.6)),
             transform: Transform::from_xyz(0.0, 0.5, 0.0),
             ..default()
         },
@@ -145,7 +145,7 @@ pub fn clear_platforms(mut commands: Commands, q_platforms: Query<Entity, With<P
 
 fn rand_platform_color() -> Color {
     let mut rng = rand::thread_rng();
-    Color::rgb(rng.gen(), rng.gen(), rng.gen())
+    Color::srgb(rng.gen(), rng.gen(), rng.gen())
 }
 
 fn rand_platform_shape() -> PlatformShape {

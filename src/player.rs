@@ -1,4 +1,5 @@
 use bevy::audio::AudioSink;
+use bevy::color::palettes;
 use bevy::prelude::*;
 use bevy::utils::Instant;
 use bevy_hanabi::prelude::*;
@@ -116,7 +117,7 @@ pub fn setup_player(
     commands.spawn((
         PbrBundle {
             mesh: meshes.add(Capsule3d::new(0.2, 0.5).mesh()),
-            material: materials.add(Color::PINK),
+            material: materials.add(Color::Srgba(palettes::css::PINK)),
             transform: Transform::from_translation(INITIAL_PLAYER_POS),
             ..default()
         },
@@ -321,7 +322,7 @@ pub fn animate_jump(
 
             // 自身旋转
             player.rotate_local_axis(
-                rotate_axis,
+                Dir3::new_unchecked(rotate_axis),
                 -(1.0 / jump_state.animation_duration) * TAU * time.delta_seconds(),
             );
         }
@@ -449,21 +450,28 @@ pub fn animate_accumulation_particle_effect(
 
             let update_linear_drag = LinearDragModifier::constant(&mut module, 8.0);
 
-            let update_force_field = ForceFieldModifier::new(vec![ForceFieldSource {
-                position: player.translation,
-                max_radius: 10.0,
-                min_radius: 0.0,
-                mass: 6.0,
-                force_exponent: 0.3,
-                conform_to_sphere: false,
-            }]);
+            // ConformToSphereModifier::new(
+            //     module.lit(player.translation),
+            //     module.lit(5.0),
+            //     module.lit(0.0),
+            //
+            //
+            // );
+            // let update_force_field = ForceFieldModifier::new(vec![ForceFieldSource {
+            //     position: player.translation,
+            //     max_radius: 10.0,
+            //     min_radius: 0.0,
+            //     mass: 6.0,
+            //     force_exponent: 0.3,
+            //     conform_to_sphere: false,
+            // }]);
 
             let effect = effects.add(
-                EffectAsset::new(3, Spawner::once(3.0.into(), true), module)
+                EffectAsset::new(vec![3], Spawner::once(3.0.into(), true), module)
                     .init(init_pos)
                     .init(init_lifetime)
                     .update(update_linear_drag)
-                    .update(update_force_field)
+                    // .update(update_force_field)
                     .render(ColorOverLifetimeModifier {
                         gradient: color_gradient.clone(),
                     })

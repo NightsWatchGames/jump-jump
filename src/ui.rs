@@ -214,7 +214,7 @@ pub fn setup_scoreboard(mut commands: Commands, asset_server: Res<AssetServer>) 
                     TextStyle {
                         font: asset_server.load("fonts/num.ttf"),
                         font_size: 40.0,
-                        color: Color::rgb(0.5, 0.5, 1.0),
+                        color: Color::srgb(0.5, 0.5, 1.0),
                     },
                 ),
                 TextSection::new(
@@ -222,7 +222,7 @@ pub fn setup_scoreboard(mut commands: Commands, asset_server: Res<AssetServer>) 
                     TextStyle {
                         font: asset_server.load("fonts/num.ttf"),
                         font_size: 40.0,
-                        color: Color::rgb(1.0, 0.5, 0.5),
+                        color: Color::srgb(1.0, 0.5, 0.5),
                     },
                 ),
             ])
@@ -270,7 +270,10 @@ pub fn shift_score_up_effect(
         score_up_effect.0.y += 1.0 * time.delta_seconds();
         // 边移动边增加透明度
         for section in text.sections.iter_mut() {
-            section.style.color.set_a(section.style.color.a() * 0.9);
+            section
+                .style
+                .color
+                .set_alpha(section.style.color.alpha() * 0.9);
         }
         if score_up_effect.0.y > INITIAL_PLAYER_POS.y + 1.2 {
             commands.entity(entity).despawn();
@@ -302,7 +305,7 @@ pub fn spawn_score_up_effect(
                     TextStyle {
                         font: asset_server.load("fonts/num.ttf"),
                         font_size: 40.0,
-                        color: Color::rgb(0.5, 0.5, 1.0),
+                        color: Color::srgb(0.5, 0.5, 1.0),
                     },
                 )])
                 .with_style(Style {

@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy_hanabi = "0.10"
-rand = "0.8.0"
-bevy = { version = "0.13", features = ["mp3"]}
+bevy_hanabi = "0.12"
+rand = "0.8"
+bevy = { version = "0.14", features = ["mp3"]}
