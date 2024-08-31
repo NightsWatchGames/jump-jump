@@ -36,15 +36,7 @@ fn main() {
             TimerMode::Once,
         )))
         .insert_resource(ScoreUpQueue(Vec::new()))
-        .add_systems(
-            Startup,
-            (
-                setup_camera,
-                setup_ground,
-                setup_ui_images,
-                setup_game_sounds,
-            ),
-        )
+        .add_systems(Startup, (setup_camera, setup_ground, setup_game_sounds))
         // Main Menu
         .add_systems(
             OnEnter(GameState::MainMenu),

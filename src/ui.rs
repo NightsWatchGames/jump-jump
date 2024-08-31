@@ -12,14 +12,6 @@ pub enum GameState {
 }
 
 #[derive(Debug, Resource)]
-pub struct UiImageHandles {
-    pub title: Handle<Image>,
-    pub btn_home: Handle<Image>,
-    pub btn_start: Handle<Image>,
-    pub btn_restart: Handle<Image>,
-}
-
-#[derive(Debug, Resource)]
 pub struct GameSounds {
     pub start: Handle<AudioSource>,
     pub accumulation: Handle<AudioSource>,
@@ -55,15 +47,6 @@ pub struct ScoreUpEvent {
 #[derive(Debug, Component)]
 pub struct ScoreUpEffect(pub Vec3);
 
-pub fn setup_ui_images(mut commands: Commands, assert_server: Res<AssetServer>) {
-    commands.insert_resource(UiImageHandles {
-        title: assert_server.load("texture/title.png"),
-        btn_home: assert_server.load("texture/btn_home.png"),
-        btn_start: assert_server.load("texture/btn_start.png"),
-        btn_restart: assert_server.load("texture/btn_restart.png"),
-    });
-}
-
 pub fn setup_game_sounds(mut commands: Commands, assert_server: Res<AssetServer>) {
     commands.insert_resource(GameSounds {
         start: assert_server.load("sounds/start.mp3"),
@@ -73,7 +56,7 @@ pub fn setup_game_sounds(mut commands: Commands, assert_server: Res<AssetServer>
     });
 }
 
-pub fn setup_main_menu(mut commands: Commands, ui_images: Res<UiImageHandles>) {
+pub fn setup_main_menu(mut commands: Commands, assert_server: Res<AssetServer>) {
     commands
         .spawn((
             NodeBundle {
@@ -101,7 +84,7 @@ pub fn setup_main_menu(mut commands: Commands, ui_images: Res<UiImageHandles>) {
                 .with_children(|parent| {
                     // 标题
                     parent.spawn(ImageBundle {
-                        image: ui_images.title.clone().into(),
+                        image: assert_server.load("texture/title.png").into(),
                         ..default()
                     });
 
@@ -116,7 +99,7 @@ pub fn setup_main_menu(mut commands: Commands, ui_images: Res<UiImageHandles>) {
                                 align_items: AlignItems::Center,
                                 ..default()
                             },
-                            image: ui_images.btn_start.clone().into(),
+                            image: assert_server.load("texture/btn_start.png").into(),
                             ..default()
                         },
                         MenuButtonAction::StartGame,
@@ -125,7 +108,7 @@ pub fn setup_main_menu(mut commands: Commands, ui_images: Res<UiImageHandles>) {
         });
 }
 
-pub fn setup_game_over_menu(mut commands: Commands, ui_images: Res<UiImageHandles>) {
+pub fn setup_game_over_menu(mut commands: Commands, assert_server: Res<AssetServer>) {
     commands
         .spawn((
             NodeBundle {
@@ -153,7 +136,7 @@ pub fn setup_game_over_menu(mut commands: Commands, ui_images: Res<UiImageHandle
                 .with_children(|parent| {
                     // 标题
                     parent.spawn(ImageBundle {
-                        image: ui_images.title.clone().into(),
+                        image: assert_server.load("texture/title.png").into(),
                         ..default()
                     });
 
@@ -178,7 +161,7 @@ pub fn setup_game_over_menu(mut commands: Commands, ui_images: Res<UiImageHandle
                                         align_items: AlignItems::Center,
                                         ..default()
                                     },
-                                    image: ui_images.btn_home.clone().into(),
+                                    image: assert_server.load("texture/btn_home.png").into(),
                                     ..default()
                                 },
                                 MenuButtonAction::BackToMainMenu,
@@ -195,7 +178,7 @@ pub fn setup_game_over_menu(mut commands: Commands, ui_images: Res<UiImageHandle
                                         align_items: AlignItems::Center,
                                         ..default()
                                     },
-                                    image: ui_images.btn_restart.clone().into(),
+                                    image: assert_server.load("texture/btn_restart.png").into(),
                                     ..default()
                                 },
                                 MenuButtonAction::RestartGame,
