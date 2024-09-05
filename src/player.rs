@@ -214,7 +214,7 @@ pub fn player_jump(
                 // 分数加1
                 score.0 += 1;
                 score_up_queue.0.push(ScoreUpEvent {
-                    pos: Vec3::new(landing_pos.x, landing_pos.y + 0.5, landing_pos.z),
+                    landing_pos: Vec3::new(landing_pos.x, landing_pos.y + 0.5, landing_pos.z),
                 });
 
                 commands

@@ -41,7 +41,7 @@ pub struct Scoreboard;
 pub struct ScoreUpQueue(pub Vec<ScoreUpEvent>);
 #[derive(Debug)]
 pub struct ScoreUpEvent {
-    pub pos: Vec3,
+    pub landing_pos: Vec3,
 }
 
 #[derive(Debug, Component)]
@@ -276,10 +276,10 @@ pub fn spawn_score_up_effect(
     if jump_state.completed {
         let window = q_windows.single();
         // 启动score up动画
-        for score_up_state in score_up_queue.0.iter_mut() {
+        for score_up_event in score_up_queue.0.iter_mut() {
             let (camera, camera_global_transform) = q_camera.single();
             let viewport_pos = camera
-                .world_to_viewport(camera_global_transform, score_up_state.pos)
+                .world_to_viewport(camera_global_transform, score_up_event.landing_pos)
                 .unwrap();
             dbg!(viewport_pos);
             commands.spawn((
@@ -297,7 +297,7 @@ pub fn spawn_score_up_effect(
                     left: Val::Px(viewport_pos.x),
                     ..default()
                 }),
-                ScoreUpEffect(score_up_state.pos),
+                ScoreUpEffect(score_up_event.landing_pos),
             ));
         }
         score_up_queue.0.clear();
