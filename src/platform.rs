@@ -59,13 +59,13 @@ impl PlatformShape {
     }
 }
 
-fn spawn_rand_platform<T:Component>(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    pos:Vec3,
-    component: T
-){
+fn spawn_rand_platform<T: Component>(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    pos: Vec3,
+    component: T,
+) {
     let platform_shape = rand_platform_shape();
     commands.spawn((
         PbrBundle {
@@ -84,7 +84,13 @@ pub fn setup_first_platform(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    spawn_rand_platform(commands,meshes,materials,Vec3::new(0.0, 0.5, 0.0),CurrentPlatform);
+    spawn_rand_platform(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        Vec3::new(0.0, 0.5, 0.0),
+        CurrentPlatform,
+    );
 }
 
 // 生成下一个平台
@@ -96,7 +102,7 @@ pub fn generate_next_platform(
     q_next_platform: Query<Entity, With<NextPlatform>>,
 ) {
     if q_next_platform.is_empty() {
-        let current_platform=&q_current_platform.single();
+        let current_platform = &q_current_platform.single();
         let mut rng = rand::thread_rng();
         let rand_distance = rng.gen_range(2.5..4.0);
         let next_pos = if rng.gen_bool(0.5) {
@@ -112,7 +118,13 @@ pub fn generate_next_platform(
                 current_platform.translation.z - rand_distance,
             )
         };
-        spawn_rand_platform(commands,meshes,materials,next_pos,NextPlatform);
+        spawn_rand_platform(
+            &mut commands,
+            &mut meshes,
+            &mut materials,
+            next_pos,
+            NextPlatform,
+        );
     }
 }
 

@@ -172,11 +172,15 @@ pub fn player_jump(
         }
         let (current_platform_entity, current_platform_transform, current_platform_shape) =
             q_current_platform.single();
-        let (next_platform_entity, next_platform_transform, next_platform_shape) = q_next_platform.single();
+        let (next_platform_entity, next_platform_transform, next_platform_shape) =
+            q_next_platform.single();
         let player = q_player.single();
 
         // 计算跳跃后的落点位置
-        let landing_pos = if (next_platform_transform.translation.x - current_platform_transform.translation.x) < 0.1 {
+        let landing_pos = if (next_platform_transform.translation.x
+            - current_platform_transform.translation.x)
+            < 0.1
+        {
             Vec3::new(
                 player.translation.x,
                 INITIAL_PLAYER_POS.y,
@@ -203,11 +207,15 @@ pub fn player_jump(
 
         // 蓄力极短，跳跃后仍在当前平台上
         // 蓄力正常，跳跃到下一平台
-        if current_platform_shape.is_landed_on_platform(current_platform_transform.translation, landing_pos)
-            || next_platform_shape.is_landed_on_platform(next_platform_transform.translation, landing_pos)
+        if current_platform_shape
+            .is_landed_on_platform(current_platform_transform.translation, landing_pos)
+            || next_platform_shape
+                .is_landed_on_platform(next_platform_transform.translation, landing_pos)
         {
             jump_state.falled = false;
-            if next_platform_shape.is_landed_on_platform(next_platform_transform.translation, landing_pos) {
+            if next_platform_shape
+                .is_landed_on_platform(next_platform_transform.translation, landing_pos)
+            {
                 // 分数加1
                 score.0 += 1;
                 score_up_queue.0.push(ScoreUpEvent {
