@@ -47,12 +47,12 @@ pub struct ScoreUpEvent {
 #[derive(Debug, Component)]
 pub struct ScoreUpEffect(pub Vec3);
 
-pub fn setup_game_sounds(mut commands: Commands, assert_server: Res<AssetServer>) {
+pub fn setup_game_sounds(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(GameSounds {
-        start: assert_server.load("sounds/start.mp3"),
-        accumulation: assert_server.load("sounds/accumulation.mp3"),
-        fall: assert_server.load("sounds/fall.mp3"),
-        success: assert_server.load("sounds/success.mp3"),
+        start: asset_server.load("sounds/start.mp3"),
+        accumulation: asset_server.load("sounds/accumulation.mp3"),
+        fall: asset_server.load("sounds/fall.mp3"),
+        success: asset_server.load("sounds/success.mp3"),
     });
 }
 

@@ -59,22 +59,32 @@ impl PlatformShape {
     }
 }
 
+fn spawn_rand_platform<T:Component>(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    pos:Vec3,
+    component: T
+){
+    let platform_shape = rand_platform_shape();
+    commands.spawn((
+        PbrBundle {
+            mesh: meshes.add(platform_shape.mesh()),
+            material: materials.add(rand_platform_color()),
+            transform: Transform::from_translation(pos),
+            ..default()
+        },
+        component,
+        platform_shape,
+    ));
+}
+
 pub fn setup_first_platform(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let platform_shape = rand_platform_shape();
-    commands.spawn((
-        PbrBundle {
-            mesh: meshes.add(platform_shape.mesh()),
-            material: materials.add(Color::srgb(0.8, 0.7, 0.6)),
-            transform: Transform::from_xyz(0.0, 0.5, 0.0),
-            ..default()
-        },
-        CurrentPlatform,
-        platform_shape,
-    ));
+    spawn_rand_platform(commands,meshes,materials,Vec3::new(0.0, 0.5, 0.0),CurrentPlatform);
 }
 
 // 生成下一个平台
@@ -86,35 +96,23 @@ pub fn generate_next_platform(
     q_next_platform: Query<Entity, With<NextPlatform>>,
 ) {
     if q_next_platform.is_empty() {
-        for current_platform in &q_current_platform {
-            let mut rng = rand::thread_rng();
-            let rand_distance = rng.gen_range(2.5..4.0);
-            let next_pos = if rng.gen_bool(0.5) {
-                Vec3::new(
-                    current_platform.translation.x + rand_distance,
-                    0.5,
-                    current_platform.translation.z,
-                )
-            } else {
-                Vec3::new(
-                    current_platform.translation.x,
-                    0.5,
-                    current_platform.translation.z - rand_distance,
-                )
-            };
-
-            let platform_shape = rand_platform_shape();
-            commands.spawn((
-                PbrBundle {
-                    mesh: meshes.add(platform_shape.mesh()),
-                    material: materials.add(rand_platform_color()),
-                    transform: Transform::from_translation(next_pos),
-                    ..default()
-                },
-                NextPlatform,
-                platform_shape,
-            ));
-        }
+        let current_platform=&q_current_platform.single();
+        let mut rng = rand::thread_rng();
+        let rand_distance = rng.gen_range(2.5..4.0);
+        let next_pos = if rng.gen_bool(0.5) {
+            Vec3::new(
+                current_platform.translation.x + rand_distance,
+                0.5,
+                current_platform.translation.z,
+            )
+        } else {
+            Vec3::new(
+                current_platform.translation.x,
+                0.5,
+                current_platform.translation.z - rand_distance,
+            )
+        };
+        spawn_rand_platform(commands,meshes,materials,next_pos,NextPlatform);
     }
 }
 
