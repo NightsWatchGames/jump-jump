@@ -143,10 +143,7 @@ pub fn player_jump(
     q_accumulation_sound: Query<&AudioSink, With<AccumulationSound>>,
     q_player: Query<&Transform, With<Player>>,
     q_current_platform: Query<(Entity, &Transform, &PlatformShape), With<CurrentPlatform>>,
-    q_next_platform: Query<
-        (Entity, &Transform, &PlatformShape),
-        (With<NextPlatform>, Without<Player>),
-    >,
+    q_next_platform: Query<(Entity, &Transform, &PlatformShape), With<NextPlatform>>,
 ) {
     if !prepare_jump_timer.0.finished() {
         // 防止从主菜单点击进入Playing状态时立即跳一次
@@ -173,13 +170,17 @@ pub fn player_jump(
             warn!("There is no next platform");
             return;
         }
-        let (current_platform_entity, current_platform, current_platform_shape) =
+        let (current_platform_entity, current_platform_transform, current_platform_shape) =
             q_current_platform.single();
-        let (next_platform_entity, next_platform, next_platform_shape) = q_next_platform.single();
+        let (next_platform_entity, next_platform_transform, next_platform_shape) =
+            q_next_platform.single();
         let player = q_player.single();
 
         // 计算跳跃后的落点位置
-        let landing_pos = if (next_platform.translation.x - current_platform.translation.x) < 0.1 {
+        let landing_pos = if (next_platform_transform.translation.x
+            - current_platform_transform.translation.x)
+            < 0.1
+        {
             Vec3::new(
                 player.translation.x,
                 INITIAL_PLAYER_POS.y,
@@ -206,11 +207,15 @@ pub fn player_jump(
 
         // 蓄力极短，跳跃后仍在当前平台上
         // 蓄力正常，跳跃到下一平台
-        if current_platform_shape.is_landed_on_platform(current_platform.translation, landing_pos)
-            || next_platform_shape.is_landed_on_platform(next_platform.translation, landing_pos)
+        if current_platform_shape
+            .is_landed_on_platform(current_platform_transform.translation, landing_pos)
+            || next_platform_shape
+                .is_landed_on_platform(next_platform_transform.translation, landing_pos)
         {
             jump_state.falled = false;
-            if next_platform_shape.is_landed_on_platform(next_platform.translation, landing_pos) {
+            if next_platform_shape
+                .is_landed_on_platform(next_platform_transform.translation, landing_pos)
+            {
                 // 分数加1
                 score.0 += 1;
                 score_up_queue.0.push(ScoreUpEvent {
@@ -232,7 +237,7 @@ pub fn player_jump(
         } else {
             jump_state.falled = true;
             if current_platform_shape.is_touched_player(
-                current_platform.translation,
+                current_platform_transform.translation,
                 landing_pos,
                 0.2,
             ) {
@@ -244,19 +249,19 @@ pub fn player_jump(
                 };
                 fall_state.animate_tilt_fall(landing_pos, fall_direction);
             } else if next_platform_shape.is_touched_player(
-                next_platform.translation,
+                next_platform_transform.translation,
                 landing_pos,
                 0.2,
             ) {
                 info!("Player touched next platform");
                 let fall_direction = if landing_pos.x == player.translation.x {
-                    if landing_pos.z < next_platform.translation.z {
+                    if landing_pos.z < next_platform_transform.translation.z {
                         Vec3::NEG_X
                     } else {
                         Vec3::X
                     }
                 } else {
-                    if landing_pos.x < next_platform.translation.x {
+                    if landing_pos.x < next_platform_transform.translation.x {
                         Vec3::Z
                     } else {
                         Vec3::NEG_Z
