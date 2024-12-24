@@ -179,7 +179,6 @@ pub fn setup_scoreboard(mut commands: Commands, asset_server: Res<AssetServer>) 
                 left: Val::Px(30.0),
                 ..default()
             },
-            Scoreboard,
         ))
         .with_child((
             TextSpan::new("0"),
@@ -189,6 +188,7 @@ pub fn setup_scoreboard(mut commands: Commands, asset_server: Res<AssetServer>) 
                 font_size: 40.0,
                 ..default()
             },
+            Scoreboard,
         ));
 }
 
