@@ -1,6 +1,6 @@
-use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
-
 use crate::player::{FallState, JumpState, Player, INITIAL_PLAYER_POS};
+use bevy::core_pipeline::bloom::Bloom;
+use bevy::prelude::*;
 
 pub const INITIAL_CAMERA_POS: Vec3 = Vec3::new(-5.0, 8.0, 5.0);
 
@@ -22,37 +22,25 @@ impl Default for CameraMoveState {
 pub fn setup_camera(mut commands: Commands) {
     // 方向光
     // TODO 阴影
-    commands.spawn(DirectionalLightBundle {
-        directional_light: DirectionalLight {
+    commands.spawn((
+        DirectionalLight {
             illuminance: 15000.0,
             shadows_enabled: true,
             ..default()
         },
-        transform: Transform::from_xyz(2.0, 10.0, 8.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
-
-    // see issue https://github.com/bevyengine/bevy/issues/7352
-    let hdr = if cfg!(target_arch = "wasm32") {
-        false
-    } else {
-        true
-    };
+        Transform::from_xyz(2.0, 10.0, 8.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
 
     // camera
-    let mut camera_command = commands.spawn((Camera3dBundle {
-        transform: Transform::from_translation(INITIAL_CAMERA_POS).looking_at(Vec3::ZERO, Vec3::Y),
-        camera: Camera {
-            hdr: hdr,
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_translation(INITIAL_CAMERA_POS).looking_at(Vec3::ZERO, Vec3::Y),
+        Camera {
+            hdr: true,
             ..default()
         },
-        ..default()
-    },));
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        camera_command.insert(BloomSettings::default());
-    }
+        Bloom::default(),
+    ));
 }
 
 pub fn setup_ground(
@@ -61,15 +49,16 @@ pub fn setup_ground(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // 地面
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(
-            Plane3d::new(Vec3::Y, Vec2::new(1000000.0, 1000000.0))
-                .mesh()
-                .size(1000000.0, 1000000.0),
+    commands.spawn((
+        Mesh3d(
+            meshes.add(
+                Plane3d::new(Vec3::Y, Vec2::new(1000000.0, 1000000.0))
+                    .mesh()
+                    .size(1000000.0, 1000000.0),
+            ),
         ),
-        material: materials.add(Color::srgb(0.95, 0.87, 0.88)),
-        ..default()
-    });
+        MeshMaterial3d(materials.add(Color::srgb(0.95, 0.87, 0.88))),
+    ));
 }
 
 // 相机跟随玩家

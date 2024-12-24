@@ -68,14 +68,11 @@ fn spawn_rand_platform<T: Component>(
 ) {
     let platform_shape = rand_platform_shape();
     commands.spawn((
-        PbrBundle {
-            mesh: meshes.add(platform_shape.mesh()),
-            material: materials.add(rand_platform_color()),
-            transform: Transform::from_translation(pos),
-            ..default()
-        },
-        component,
+        Mesh3d(meshes.add(platform_shape.mesh())),
+        MeshMaterial3d(materials.add(rand_platform_color())),
+        Transform::from_translation(pos),
         platform_shape,
+        component,
     ));
 }
 
@@ -118,6 +115,7 @@ pub fn generate_next_platform(
                 current_platform.translation.z - rand_distance,
             )
         };
+
         spawn_rand_platform(
             &mut commands,
             &mut meshes,
@@ -138,7 +136,7 @@ pub fn animate_platform_accumulation(
     match accumulator.0 {
         Some(_) => {
             current_platform.scale.y =
-                (current_platform.scale.y - 0.15 * time.delta_seconds()).max(0.6);
+                (current_platform.scale.y - 0.15 * time.delta_secs()).max(0.6);
         }
         None => {
             // TODO 回弹效果

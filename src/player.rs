@@ -115,18 +115,15 @@ pub fn setup_player(
     game_sounds: Res<GameSounds>,
 ) {
     commands.spawn((
-        PbrBundle {
-            mesh: meshes.add(Capsule3d::new(0.2, 0.5).mesh()),
-            material: materials.add(Color::Srgba(palettes::css::PINK)),
-            transform: Transform::from_translation(INITIAL_PLAYER_POS),
-            ..default()
-        },
+        Mesh3d(meshes.add(Capsule3d::new(0.2, 0.5).mesh())),
+        MeshMaterial3d(materials.add(Color::Srgba(palettes::css::PINK))),
+        Transform::from_translation(INITIAL_PLAYER_POS),
         Player,
     ));
-    commands.spawn(AudioBundle {
-        source: game_sounds.start.clone(),
-        settings: PlaybackSettings::DESPAWN,
-    });
+    commands.spawn((
+        AudioPlayer(game_sounds.start.clone()),
+        PlaybackSettings::DESPAWN,
+    ));
 }
 
 pub fn player_jump(
@@ -155,10 +152,8 @@ pub fn player_jump(
         accumulator.0 = time.last_update();
         commands.spawn((
             AccumulationSound,
-            AudioBundle {
-                source: game_sounds.accumulation.clone(),
-                settings: PlaybackSettings::LOOP,
-            },
+            AudioPlayer(game_sounds.accumulation.clone()),
+            PlaybackSettings::LOOP,
         ));
     }
     if buttons.just_released(MouseButton::Left)
@@ -305,7 +300,7 @@ pub fn animate_jump(
         };
         let quat = Quat::from_axis_angle(
             rotate_axis,
-            -(1.0 / jump_state.animation_duration) * PI * time.delta_seconds(),
+            -(1.0 / jump_state.animation_duration) * PI * time.delta_secs(),
         );
 
         let mut clone_player = player.clone();
@@ -317,10 +312,10 @@ pub fn animate_jump(
             // 结束跳跃
             jump_state.completed = true;
             if !jump_state.falled {
-                commands.spawn(AudioBundle {
-                    source: game_sounds.success.clone(),
-                    settings: PlaybackSettings::DESPAWN,
-                });
+                commands.spawn((
+                    AudioPlayer(game_sounds.success.clone()),
+                    PlaybackSettings::DESPAWN,
+                ));
             }
         } else {
             player.translate_around(around_point, quat);
@@ -328,7 +323,7 @@ pub fn animate_jump(
             // 自身旋转
             player.rotate_local_axis(
                 Dir3::new_unchecked(rotate_axis),
-                -(1.0 / jump_state.animation_duration) * TAU * time.delta_seconds(),
+                -(1.0 / jump_state.animation_duration) * TAU * time.delta_secs(),
             );
         }
     }
@@ -344,9 +339,9 @@ pub fn animate_player_accumulation(
     let mut player = q_player.single_mut();
     match accumulator.0 {
         Some(_) => {
-            player.scale.x = (player.scale.x + 0.12 * time.delta_seconds()).min(1.3);
-            player.scale.y = (player.scale.y - 0.15 * time.delta_seconds()).max(0.6);
-            player.scale.z = (player.scale.z + 0.12 * time.delta_seconds()).min(1.3);
+            player.scale.x = (player.scale.x + 0.12 * time.delta_secs()).min(1.3);
+            player.scale.y = (player.scale.y - 0.15 * time.delta_secs()).max(0.6);
+            player.scale.z = (player.scale.z + 0.12 * time.delta_secs()).min(1.3);
         }
         None => {
             player.scale = Vec3::ONE;
@@ -365,10 +360,10 @@ pub fn animate_fall(
 ) {
     if !fall_state.completed && jump_state.completed {
         if !fall_state.played_sound {
-            commands.spawn(AudioBundle {
-                source: game_sounds.fall.clone(),
-                settings: PlaybackSettings::DESPAWN,
-            });
+            commands.spawn((
+                AudioPlayer(game_sounds.fall.clone()),
+                PlaybackSettings::DESPAWN,
+            ));
             fall_state.played_sound = true;
         }
         let mut player = q_player.single_mut();
@@ -380,7 +375,7 @@ pub fn animate_fall(
                     info!("Game over!");
                     next_game_state.set(GameState::GameOver);
                 } else {
-                    player.translation.y -= 0.7 * time.delta_seconds();
+                    player.translation.y -= 0.7 * time.delta_secs();
                 }
             }
             FallType::Tilt(direction) => {
@@ -394,10 +389,8 @@ pub fn animate_fall(
                     if player.translation.y < around_point.y {
                         fall_state.tilt_completed = true;
                     } else {
-                        let quat = Quat::from_axis_angle(
-                            direction,
-                            1.0 * FRAC_PI_2 * time.delta_seconds(),
-                        );
+                        let quat =
+                            Quat::from_axis_angle(direction, 1.0 * FRAC_PI_2 * time.delta_secs());
                         player.rotate_around(around_point, quat);
                     }
                 } else {
@@ -408,7 +401,7 @@ pub fn animate_fall(
                         info!("Game over!");
                         next_game_state.set(GameState::GameOver);
                     } else {
-                        player.translation.y -= 0.7 * time.delta_seconds();
+                        player.translation.y -= 0.7 * time.delta_secs();
                     }
                 }
             }
@@ -437,11 +430,11 @@ pub fn animate_accumulation_particle_effect(
             color_gradient.add_key(1.0, Vec4::new(4.0, 0.0, 0.0, 0.0));
 
             let mut size_gradient = Gradient::new();
-            size_gradient.add_key(0.0, Vec2::splat(0.05));
-            size_gradient.add_key(0.3, Vec2::splat(0.05));
-            size_gradient.add_key(1.0, Vec2::splat(0.0));
+            size_gradient.add_key(0.0, Vec3::splat(0.05));
+            size_gradient.add_key(0.3, Vec3::splat(0.05));
+            size_gradient.add_key(1.0, Vec3::splat(0.0));
 
-            let name = format!("accumulation{}", time.elapsed_seconds() as u32);
+            let name = format!("accumulation{}", time.elapsed_secs() as u32);
             let mut module = Module::default();
 
             let init_pos = SetPositionSphereModifier {
@@ -472,7 +465,7 @@ pub fn animate_accumulation_particle_effect(
             // }]);
 
             let effect = effects.add(
-                EffectAsset::new(vec![3], Spawner::once(3.0.into(), true), module)
+                EffectAsset::new(3, Spawner::once(3.0.into(), true), module)
                     .init(init_pos)
                     .init(init_lifetime)
                     .update(update_linear_drag)

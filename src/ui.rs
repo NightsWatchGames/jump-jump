@@ -59,128 +59,103 @@ pub fn setup_game_sounds(mut commands: Commands, asset_server: Res<AssetServer>)
 pub fn setup_main_menu(mut commands: Commands, assert_server: Res<AssetServer>) {
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.),
-                    height: Val::Percent(100.),
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
+            Node {
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
             },
             OnMainMenuScreen,
         ))
         .with_children(|parent| {
             parent
-                .spawn(NodeBundle {
-                    style: Style {
-                        flex_direction: FlexDirection::Column,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
+                .spawn((Node {
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
                     ..default()
-                })
+                },))
                 .with_children(|parent| {
                     // 标题
-                    parent.spawn(ImageBundle {
-                        image: assert_server.load("texture/title.png").into(),
-                        ..default()
-                    });
+                    parent.spawn((ImageNode::new(
+                        assert_server.load("texture/title.png").into(),
+                    ),));
 
                     // 开始按钮
                     parent.spawn((
-                        ButtonBundle {
-                            style: Style {
-                                width: Val::Px(150.),
-                                height: Val::Px(60.),
-                                margin: UiRect::all(Val::Px(10.0)),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                ..default()
-                            },
-                            image: assert_server.load("texture/btn_start.png").into(),
+                        Button,
+                        Node {
+                            width: Val::Px(150.),
+                            height: Val::Px(60.),
+                            margin: UiRect::all(Val::Px(10.0)),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
                             ..default()
                         },
+                        ImageNode::new(assert_server.load("texture/btn_start.png").into()),
                         MenuButtonAction::StartGame,
                     ));
                 });
         });
 }
 
-pub fn setup_game_over_menu(mut commands: Commands, assert_server: Res<AssetServer>) {
+pub fn setup_game_over_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.),
-                    height: Val::Percent(100.),
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
+            Node {
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
             },
             OnGameOverMenuScreen,
         ))
         .with_children(|parent| {
             parent
-                .spawn(NodeBundle {
-                    style: Style {
-                        flex_direction: FlexDirection::Column,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
+                .spawn((Node {
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
                     ..default()
-                })
+                },))
                 .with_children(|parent| {
                     // 标题
-                    parent.spawn(ImageBundle {
-                        image: assert_server.load("texture/title.png").into(),
-                        ..default()
-                    });
+                    parent.spawn((ImageNode::new(asset_server.load("texture/title.png")),));
 
                     parent
-                        .spawn(NodeBundle {
-                            style: Style {
-                                flex_direction: FlexDirection::Row,
-                                align_items: AlignItems::Center,
-                                ..default()
-                            },
+                        .spawn((Node {
+                            flex_direction: FlexDirection::Row,
+                            align_items: AlignItems::Center,
                             ..default()
-                        })
+                        },))
                         .with_children(|parent| {
                             // 返回按钮
                             parent.spawn((
-                                ButtonBundle {
-                                    style: Style {
-                                        width: Val::Px(40.),
-                                        height: Val::Px(40.),
-                                        margin: UiRect::all(Val::Px(10.0)),
-                                        justify_content: JustifyContent::Center,
-                                        align_items: AlignItems::Center,
-                                        ..default()
-                                    },
-                                    image: assert_server.load("texture/btn_home.png").into(),
+                                Button,
+                                Node {
+                                    width: Val::Px(40.),
+                                    height: Val::Px(40.),
+                                    margin: UiRect::all(Val::Px(10.0)),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
                                     ..default()
                                 },
+                                ImageNode::new(asset_server.load("texture/btn_home.png")),
                                 MenuButtonAction::BackToMainMenu,
                             ));
 
                             // 重新开始按钮
                             parent.spawn((
-                                ButtonBundle {
-                                    style: Style {
-                                        width: Val::Px(150.),
-                                        height: Val::Px(60.),
-                                        margin: UiRect::all(Val::Px(10.0)),
-                                        justify_content: JustifyContent::Center,
-                                        align_items: AlignItems::Center,
-                                        ..default()
-                                    },
-                                    image: assert_server.load("texture/btn_restart.png").into(),
+                                Button,
+                                Node {
+                                    width: Val::Px(150.),
+                                    height: Val::Px(60.),
+                                    margin: UiRect::all(Val::Px(10.0)),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
                                     ..default()
                                 },
+                                ImageNode::new(asset_server.load("texture/btn_restart.png")),
                                 MenuButtonAction::RestartGame,
                             ));
                         });
@@ -190,45 +165,42 @@ pub fn setup_game_over_menu(mut commands: Commands, assert_server: Res<AssetServ
 
 pub fn setup_scoreboard(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
-        .spawn(
-            TextBundle::from_sections([
-                TextSection::new(
-                    "Score: ",
-                    TextStyle {
-                        font: asset_server.load("fonts/num.ttf"),
-                        font_size: 40.0,
-                        color: Color::srgb(0.5, 0.5, 1.0),
-                    },
-                ),
-                TextSection::new(
-                    "0",
-                    TextStyle {
-                        font: asset_server.load("fonts/num.ttf"),
-                        font_size: 40.0,
-                        color: Color::srgb(1.0, 0.5, 0.5),
-                    },
-                ),
-            ])
-            .with_style(Style {
+        .spawn((
+            Text::new("Score: "),
+            TextColor(Color::srgb(0.5, 0.5, 1.0)),
+            TextFont {
+                font: asset_server.load("fonts/num.ttf"),
+                font_size: 40.0,
+                ..default()
+            },
+            Node {
                 position_type: PositionType::Absolute,
                 top: Val::Px(30.0),
                 left: Val::Px(30.0),
                 ..default()
-            }),
-        )
-        .insert(Scoreboard);
+            },
+            Scoreboard,
+        ))
+        .with_child((
+            TextSpan::new("0"),
+            TextColor(Color::srgb(1.0, 0.5, 0.5)),
+            TextFont {
+                font: asset_server.load("fonts/num.ttf"),
+                font_size: 40.0,
+                ..default()
+            },
+        ));
 }
 
-pub fn update_scoreboard(score: Res<Score>, mut query: Query<&mut Text, With<Scoreboard>>) {
+pub fn update_scoreboard(score: Res<Score>, mut span: Single<&mut TextSpan, With<Scoreboard>>) {
     if score.is_changed() {
-        let mut text = query.single_mut();
-        text.sections[1].value = score.0.to_string();
+        span.0 = score.0.to_string();
     }
 }
 
 // 当摄像机或飘分效果坐标变化时进行同步
 pub fn sync_score_up_effect(
-    mut q_score_up_effect: Query<(&mut Style, &mut ScoreUpEffect)>,
+    mut q_score_up_effect: Query<(&mut Node, &mut ScoreUpEffect)>,
     q_camera: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     q_windows: Query<&Window, With<PrimaryWindow>>,
 ) {
@@ -246,18 +218,14 @@ pub fn sync_score_up_effect(
 // 向上移动飘分效果
 pub fn shift_score_up_effect(
     mut commands: Commands,
-    mut q_score_up_effect: Query<(Entity, &mut Text, &mut ScoreUpEffect)>,
+    mut q_score_up_effect: Query<(Entity, &mut TextColor, &mut ScoreUpEffect)>,
     time: Res<Time>,
 ) {
-    for (entity, mut text, mut score_up_effect) in &mut q_score_up_effect {
-        score_up_effect.0.y += 1.0 * time.delta_seconds();
+    for (entity, mut text_color, mut score_up_effect) in &mut q_score_up_effect {
+        score_up_effect.0.y += 1.0 * time.delta_secs();
         // 边移动边增加透明度
-        for section in text.sections.iter_mut() {
-            section
-                .style
-                .color
-                .set_alpha(section.style.color.alpha() * 0.9);
-        }
+        let alpha = text_color.0.alpha();
+        text_color.0.set_alpha(alpha * 0.9);
         if score_up_effect.0.y > INITIAL_PLAYER_POS.y + 1.2 {
             commands.entity(entity).despawn();
         }
@@ -283,20 +251,19 @@ pub fn spawn_score_up_effect(
                 .unwrap();
             dbg!(viewport_pos);
             commands.spawn((
-                TextBundle::from_sections([TextSection::new(
-                    "+1",
-                    TextStyle {
-                        font: asset_server.load("fonts/num.ttf"),
-                        font_size: 40.0,
-                        color: Color::srgb(0.5, 0.5, 1.0),
-                    },
-                )])
-                .with_style(Style {
+                Text::new("+1"),
+                TextColor(Color::srgb(0.5, 0.5, 1.0)),
+                TextFont {
+                    font: asset_server.load("fonts/num.ttf"),
+                    font_size: 40.0,
+                    ..default()
+                },
+                Node {
                     position_type: PositionType::Absolute,
                     top: Val::Px(window.resolution.height() - viewport_pos.y),
                     left: Val::Px(viewport_pos.x),
                     ..default()
-                }),
+                },
                 ScoreUpEffect(score_up_event.landing_pos),
             ));
         }
