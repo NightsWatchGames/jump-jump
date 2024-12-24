@@ -225,7 +225,7 @@ pub fn shift_score_up_effect(
         score_up_effect.0.y += 1.0 * time.delta_secs();
         // 边移动边增加透明度
         let alpha = text_color.0.alpha();
-        text_color.0.set_alpha(alpha * 0.9);
+        text_color.0.set_alpha(alpha * 0.97);
         if score_up_effect.0.y > INITIAL_PLAYER_POS.y + 1.2 {
             commands.entity(entity).despawn();
         }
