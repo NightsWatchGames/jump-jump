@@ -56,7 +56,7 @@ pub fn setup_game_sounds(mut commands: Commands, asset_server: Res<AssetServer>)
     });
 }
 
-pub fn setup_main_menu(mut commands: Commands, assert_server: Res<AssetServer>) {
+pub fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
             Node {
@@ -78,7 +78,7 @@ pub fn setup_main_menu(mut commands: Commands, assert_server: Res<AssetServer>) 
                 .with_children(|parent| {
                     // 标题
                     parent.spawn((ImageNode::new(
-                        assert_server.load("texture/title.png").into(),
+                        asset_server.load("texture/title.png").into(),
                     ),));
 
                     // 开始按钮
@@ -92,7 +92,7 @@ pub fn setup_main_menu(mut commands: Commands, assert_server: Res<AssetServer>) 
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        ImageNode::new(assert_server.load("texture/btn_start.png").into()),
+                        ImageNode::new(asset_server.load("texture/btn_start.png").into()),
                         MenuButtonAction::StartGame,
                     ));
                 });
